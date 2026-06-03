@@ -20,11 +20,14 @@ class DispositivoMovilResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'            => $this->id,
-            'plataforma'    => $this->plataforma,
-            'activo'        => $this->activo,
-            'ultimo_uso_at' => $this->ultimo_uso_at?->toIso8601String(),
-            'created_at'    => $this->created_at?->toIso8601String(),
+            'id'                 => $this->id,
+            'plataforma'         => $this->plataforma,
+            'canal'              => $this->canal,
+            'tipo_app'           => $this->tipo_app,
+            'modelo_dispositivo' => $this->modelo_dispositivo,
+            'activo'             => $this->activo,
+            'ultimo_uso_at'      => $this->ultimo_uso_at?->toIso8601String(),
+            'created_at'         => $this->created_at?->toIso8601String(),
         ];
     }
 }

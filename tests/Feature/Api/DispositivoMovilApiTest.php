@@ -64,14 +64,70 @@ class DispositivoMovilApiTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('exito', true)
-            ->assertJsonPath('datos.plataforma', 'android');
+            ->assertJsonPath('datos.plataforma', 'android')
+            ->assertJsonPath('datos.canal', 'fcm'); // default cuando no se envía canal
 
         $this->assertDatabaseHas('dispositivos_moviles', [
             'user_id'    => $user->id,
             'token_fcm'  => self::TOKEN_EJEMPLO,
             'plataforma' => 'android',
+            'canal'      => 'fcm',
             'activo'     => true,
         ]);
+    }
+
+    public function test_registrar_token_con_metadatos_fcm_directo(): void
+    {
+        $user = $this->conductorUser();
+
+        $this->withToken($this->token($user))
+            ->postJson('/api/v1/dispositivos', [
+                'token_fcm'          => self::TOKEN_EJEMPLO,
+                'plataforma'         => 'android',
+                'canal'              => 'fcm',
+                'tipo_app'           => 'conductor',
+                'modelo_dispositivo' => 'Pixel 6',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('datos.canal', 'fcm')
+            ->assertJsonPath('datos.tipo_app', 'conductor')
+            ->assertJsonPath('datos.modelo_dispositivo', 'Pixel 6');
+
+        $this->assertDatabaseHas('dispositivos_moviles', [
+            'user_id'            => $user->id,
+            'token_fcm'          => self::TOKEN_EJEMPLO,
+            'canal'              => 'fcm',
+            'tipo_app'           => 'conductor',
+            'modelo_dispositivo' => 'Pixel 6',
+        ]);
+    }
+
+    public function test_tipo_app_invalido_falla_validacion(): void
+    {
+        $user = $this->conductorUser();
+
+        $this->withToken($this->token($user))
+            ->postJson('/api/v1/dispositivos', [
+                'token_fcm'  => self::TOKEN_EJEMPLO,
+                'plataforma' => 'android',
+                'tipo_app'   => 'super_admin', // inválido
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('exito', false);
+    }
+
+    public function test_canal_invalido_falla_validacion(): void
+    {
+        $user = $this->conductorUser();
+
+        $this->withToken($this->token($user))
+            ->postJson('/api/v1/dispositivos', [
+                'token_fcm'  => self::TOKEN_EJEMPLO,
+                'plataforma' => 'android',
+                'canal'      => 'expo_push', // inválido
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('exito', false);
     }
 
     public function test_registrar_mismo_token_es_idempotente(): void

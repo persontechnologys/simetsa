@@ -37,9 +37,12 @@ class DispositivoMovilController extends ApiController
                 'token_fcm' => $datos['token_fcm'],
             ],
             [
-                'plataforma'    => $datos['plataforma'],
-                'activo'        => true,
-                'ultimo_uso_at' => now(),
+                'plataforma'         => $datos['plataforma'],
+                'canal'              => $datos['canal'] ?? DispositivoMovil::CANAL_FCM,
+                'tipo_app'           => $datos['tipo_app'] ?? null,
+                'modelo_dispositivo' => $datos['modelo_dispositivo'] ?? null,
+                'activo'             => true,
+                'ultimo_uso_at'      => now(),
             ]
         );
 
