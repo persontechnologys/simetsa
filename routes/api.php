@@ -1,6 +1,7 @@
 <?php
 // routes/api.php
 
+use App\Http\Controllers\Api\AgenteAuthController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CredencialDiscapacidadController as ApiCredencialDiscapacidadController;
 use App\Http\Controllers\Api\DispositivoMovilController as ApiDispositivoMovilController;
@@ -27,6 +28,9 @@ Route::prefix('v1')->group(function () {
     Route::post('registro', [AuthController::class, 'registrar'])->name('api.registro'); // Fase 4
     Route::post('login',    [AuthController::class, 'login'])->name('api.login');
 
+    // ===== Fase 9.B — Auth agente de parqueo (app móvil) =====
+    Route::post('agente/auth/login', [AgenteAuthController::class, 'login'])->name('api.agente.login');
+
     // ===== Fase 6.C — Webhooks de pago (públicos, firmados por el gateway) =====
     Route::post('pagos/webhook/{proveedor}', [PagoWebhookController::class, 'recibir'])
         ->name('api.pagos.webhook')
@@ -36,6 +40,10 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
         Route::get('perfil',  [AuthController::class, 'perfil'])->name('api.perfil');
+
+        // ===== Fase 9.B — Auth agente (protegidas) =====
+        Route::post('agente/auth/logout', [AgenteAuthController::class, 'logout'])->name('api.agente.logout');
+        Route::get('agente/auth/perfil',  [AgenteAuthController::class, 'perfil'])->name('api.agente.perfil');
 
         // ===== Fase 4.A — Catálogo de tipos de vehículo (solo lectura, Art. 25) =====
         Route::get('tipos-vehiculo', [ApiTipoVehiculoController::class, 'index'])->name('api.tipos-vehiculo.index');
