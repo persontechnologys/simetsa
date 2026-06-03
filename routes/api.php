@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Api\AgenteAuthController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\MovilAuthController;
 use App\Http\Controllers\Api\ZonaApiController;
 use App\Http\Controllers\Api\CredencialDiscapacidadController as ApiCredencialDiscapacidadController;
 use App\Http\Controllers\Api\DispositivoMovilController as ApiDispositivoMovilController;
@@ -29,8 +30,11 @@ Route::prefix('v1')->group(function () {
     Route::post('registro', [AuthController::class, 'registrar'])->name('api.registro'); // Fase 4
     Route::post('login',    [AuthController::class, 'login'])->name('api.login');
 
-    // ===== Fase 9.B — Auth agente de parqueo (app móvil) =====
+    // ===== Fase 9.B — Auth agente de parqueo (legacy, se mantiene) =====
     Route::post('agente/auth/login', [AgenteAuthController::class, 'login'])->name('api.agente.login');
+
+    // ===== Auth móvil unificada — todos los roles habilitados (Fase 9 refactor) =====
+    Route::post('movil/login', [MovilAuthController::class, 'login'])->name('api.movil.login');
 
     // ===== Fase 6.C — Webhooks de pago (públicos, firmados por el gateway) =====
     Route::post('pagos/webhook/{proveedor}', [PagoWebhookController::class, 'recibir'])
@@ -42,9 +46,13 @@ Route::prefix('v1')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
         Route::get('perfil',  [AuthController::class, 'perfil'])->name('api.perfil');
 
-        // ===== Fase 9.B — Auth agente (protegidas) =====
+        // ===== Fase 9.B — Auth agente (legacy, se mantiene) =====
         Route::post('agente/auth/logout', [AgenteAuthController::class, 'logout'])->name('api.agente.logout');
         Route::get('agente/auth/perfil',  [AgenteAuthController::class, 'perfil'])->name('api.agente.perfil');
+
+        // ===== Auth móvil unificada — protegidas (Fase 9 refactor) =====
+        Route::post('movil/logout', [MovilAuthController::class, 'logout'])->name('api.movil.logout');
+        Route::get('movil/me',      [MovilAuthController::class, 'me'])->name('api.movil.me');
 
         // ===== Fase 9.C — Catálogo de zonas activas + calles (formulario de ticket) =====
         Route::get('zonas', [ZonaApiController::class, 'index'])->name('api.zonas.index');
