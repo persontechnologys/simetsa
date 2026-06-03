@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Api\AgenteAuthController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ZonaApiController;
 use App\Http\Controllers\Api\CredencialDiscapacidadController as ApiCredencialDiscapacidadController;
 use App\Http\Controllers\Api\DispositivoMovilController as ApiDispositivoMovilController;
 use App\Http\Controllers\Api\InfraccionController as ApiInfraccionController;
@@ -44,6 +45,9 @@ Route::prefix('v1')->group(function () {
         // ===== Fase 9.B — Auth agente (protegidas) =====
         Route::post('agente/auth/logout', [AgenteAuthController::class, 'logout'])->name('api.agente.logout');
         Route::get('agente/auth/perfil',  [AgenteAuthController::class, 'perfil'])->name('api.agente.perfil');
+
+        // ===== Fase 9.C — Catálogo de zonas activas + calles (formulario de ticket) =====
+        Route::get('zonas', [ZonaApiController::class, 'index'])->name('api.zonas.index');
 
         // ===== Fase 4.A — Catálogo de tipos de vehículo (solo lectura, Art. 25) =====
         Route::get('tipos-vehiculo', [ApiTipoVehiculoController::class, 'index'])->name('api.tipos-vehiculo.index');
