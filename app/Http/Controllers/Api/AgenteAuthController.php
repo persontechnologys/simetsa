@@ -59,7 +59,8 @@ class AgenteAuthController extends ApiController
             'token'      => $token,
             'tipo_token' => 'Bearer',
             'rol'        => RolSistema::AgenteParqueo->value,
-            'agente'     => new AgenteParqueoResource($agente->load('user')),
+            // Cargamos asignaciones.zona para exponer zona_actual en el resource (Fase 9.E)
+            'agente'     => new AgenteParqueoResource($agente->load(['user', 'asignaciones.zona'])),
         ], 'Sesión iniciada.');
     }
 
@@ -108,7 +109,7 @@ class AgenteAuthController extends ApiController
         }
 
         return $this->exito(
-            new AgenteParqueoResource($agente->load('user')),
+            new AgenteParqueoResource($agente->load(['user', 'asignaciones.zona'])),
             'Perfil del agente.'
         );
     }

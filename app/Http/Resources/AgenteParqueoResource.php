@@ -9,7 +9,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Representación JSON del agente de parqueo para la app móvil (Fase 9).
  *
- * Espera que la relación 'user' esté cargada.
+ * Relaciones esperadas cargadas: 'user', 'asignaciones.zona'.
+ * La zona se incluye solo cuando la relación 'asignaciones' está cargada
+ * (usando whenLoaded para no romper llamadas que no la precargan).
  */
 class AgenteParqueoResource extends JsonResource
 {
@@ -26,6 +28,23 @@ class AgenteParqueoResource extends JsonResource
             'email'              => $this->user?->email,
             'numero_credencial'  => $this->numero_credencial,
             'fecha_autorizacion' => $this->fecha_autorizacion?->toDateString(),
+            'zona_actual'        => $this->whenLoaded('asignaciones', function () {
+                $asignacion = $this->asignaciones->firstWhere('activa', true);
+                $zona = $asignacion?->zona;
+                if (! $zona) return null;
+
+                return [
+                    'id'         => $zona->id,
+                    'nombre'     => $zona->nombre,
+                    'codigo'     => $zona->codigo,
+                    'color'      => $zona->color,
+                    'centro_lat' => $zona->centro_lat,
+                    'centro_lng' => $zona->centro_lng,
+                    'zoom'       => $zona->zoom ?? 16,
+                    // Polígono como array de [lat, lng] — app lo convierte a { latitude, longitude }
+                    'poligono'   => $zona->poligono,
+                ];
+            }),
         ];
     }
 }
