@@ -107,7 +107,7 @@ Trabajamos por **fases incrementales**. No avanzar a la siguiente fase hasta que
 
 **Total Fase 8:** 56 tests nuevos, 529 total. Paquete nuevo: `maatwebsite/excel ^3.1`. Layout nuevo: `resources/views/layouts/impresion.blade.php`. Partial nuevo: `resources/views/reportes/_partials/kpi-card.blade.php` (reutilizado en los 4 reportes). Decisiones: Maatwebsite para Excel + Blade imprimible para PDF (sin `wkhtmltopdf`), Cache Laravel 5 min para KPIs, `whereHasMorph` para filtro zona en recaudación, `JSON_PRESERVE_ZERO_FRACTION` en endpoint kpis, `ReporteGenerado`/`KPI` como modelos descartados (queries directas + cache suficientes).
 
-## Fase 9 — Aplicación Móvil (Expo) ⏳
+## Fase 9 — Aplicación Móvil (Expo) ✓
 
 Stack: **Expo SDK 56** (JS puro, sin TypeScript) + `react-native-maps` (OSM) + `expo-location` + `expo-secure-store`. Repositorio: `/workspace/simetsa-movil`. Rama backend: `fase-9-app-movil`.
 
@@ -123,7 +123,7 @@ Stack: **Expo SDK 56** (JS puro, sin TypeScript) + `react-native-maps` (OSM) + `
 
 **9.F ✓ FCM directo** — `getDevicePushTokenAsync()` + metadatos (`canal`, `tipo_app`, `modelo`) en tabla `dispositivos_moviles`. Requiere **development build** para obtener token real (null en Expo Go). Lazy import de `expo-notifications` para evitar crash en Expo Go.
 
-**9.G 🔒 Pulido e integración final** — pendiente. No iniciar hasta que el usuario apruebe el estado de 9.C y 9.D.
+**9.G ✓ Pulido e integración final** — 8 stubs eliminados (routing limpio), `pago_simulado` gateado con `__DEV__` en comprar-ticket y detalle-infraccion, `EXPO_PUBLIC_API_URL` via `.env` (Expo SDK 56 env vars nativas), `.env.example` documentado, `eas.json` con perfiles development/preview/production. 21/21 expo-doctor.
 
 **Decisiones:**
 - Una sola app (no dos APKs): menú y tabs se muestran según rol.
