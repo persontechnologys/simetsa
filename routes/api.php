@@ -34,7 +34,7 @@ Route::prefix('v1')->group(function () {
     Route::post('agente/auth/login', [AgenteAuthController::class, 'login'])->name('api.agente.login');
 
     // ===== Auth móvil unificada — todos los roles habilitados (Fase 9 refactor) =====
-    Route::post('movil/login', [MovilAuthController::class, 'login'])->name('api.movil.login');
+    Route::post('movil/login', [MovilAuthController::class, 'login'])->name('api.movil.login'); // URL=> /api/v1/movil/login
 
     // ===== Fase 6.C — Webhooks de pago (públicos, firmados por el gateway) =====
     Route::post('pagos/webhook/{proveedor}', [PagoWebhookController::class, 'recibir'])
