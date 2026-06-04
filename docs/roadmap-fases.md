@@ -107,13 +107,30 @@ Trabajamos por **fases incrementales**. No avanzar a la siguiente fase hasta que
 
 **Total Fase 8:** 56 tests nuevos, 529 total. Paquete nuevo: `maatwebsite/excel ^3.1`. Layout nuevo: `resources/views/layouts/impresion.blade.php`. Partial nuevo: `resources/views/reportes/_partials/kpi-card.blade.php` (reutilizado en los 4 reportes). Decisiones: Maatwebsite para Excel + Blade imprimible para PDF (sin `wkhtmltopdf`), Cache Laravel 5 min para KPIs, `whereHasMorph` para filtro zona en recaudación, `JSON_PRESERVE_ZERO_FRACTION` en endpoint kpis, `ReporteGenerado`/`KPI` como modelos descartados (queries directas + cache suficientes).
 
-## Fase 9 — Aplicación Móvil (Expo)
+## Fase 9 — Aplicación Móvil (Expo) ⏳
 
-- Stack: **Expo** (SDK, JS, sin TypeScript) + `react-native-maps` (OSM) + `expo-location`.
-- App de Conductores: registro/login, comprar ticket, historial, cancelar, ver infracciones, pagar multa.
-- App de Agentes de Parqueo: login, validar placa, iniciar sesión de parqueo, registrar infracción, aplicar/retirar candado, mapa de zona.
-- Integración con FCM para push notifications (`expo-notifications` + token registrado en `POST /api/v1/dispositivos`).
-- Mapas OpenStreetMap via `react-native-maps` con tiles OSM.
+Stack: **Expo SDK 56** (JS puro, sin TypeScript) + `react-native-maps` (OSM) + `expo-location` + `expo-secure-store`. Repositorio: `/workspace/simetsa-movil`. Rama backend: `fase-9-app-movil`.
+
+**9.A ✓ Scaffolding** — Estructura Expo Router file-based, una sola app para conductor y agente (no dos apps separadas). Componentes base: `BotonPrimario`, `CampoTexto`, `Cargando`, `EtiquetaEstado`, `MensajeError`. Servicios: `authService`, `apiClient` (axios), `ticketsService`, `vehiculosService`, `infraccionesService`, `sesionesService`, `zonasService`, `dispositivosService`.
+
+**9.B ✓ Auth global unificada** — `MovilAuthController` (login/logout/me): un solo endpoint `POST /api/v1/movil/login` detecta el rol automáticamente. `UsuarioMovilResource` devuelve `roles[]` + `permisos[]`. `config/simetsa.php → roles_movil` define qué roles pueden acceder. `AuthContext` (Expo) expone `hasRole()`, `hasAnyRole()`, `can()`. Token Bearer en `expo-secure-store`. FCM completamente opcional (no bloquea login). Redirección post-login basada en roles. Backward compat con endpoints legacy. 8 tests nuevos, 544 total. Docs: `docs/api/movil-auth.md`, `docs/mobile/auth-global.md`.
+
+**9.C ✓ App Conductor** — 5 tabs: Inicio (KPIs: tickets activos, multas pendientes; botón Comprar Ticket; últimos tickets), Tickets (listado activos), Vehículos (CRUD), Multas (infracciones pendientes e inmovilizadas), Perfil (cierre de sesión). Pantallas adicionales: comprar-ticket (modal, selector zona/calle/vehículo/horas/método pago), historial, detalle-ticket, detalle-vehículo, detalle-infracción, crear-vehículo.
+
+**9.D ✓ App Agente** — 5 tabs: Inicio (tarjeta agente nombre/código/estado + 3 acciones rápidas), Validar Placa (ABC-1234, muestra ticket activo/tolerancia/sin ticket, botón "Iniciar Sesión de Parqueo" inline Art. 16), Infracción (form: placa, tipo 12 opciones, zona, GPS, observaciones; opción inmovilizar post-registro), Mapa (OSM sin API key, polígono zona, GPS real-time), Perfil. Pantalla detalle-infracción en stack.
+
+**9.E ✓ Mapa agente** — `react-native-maps` con tiles OSM (no API key), polígono de zona desde `AgenteParqueoResource.zona_actual.poligono`, posición GPS real-time via `expo-location watchPositionAsync`, FAB centrar, atribución OSM.
+
+**9.F ✓ FCM directo** — `getDevicePushTokenAsync()` + metadatos (`canal`, `tipo_app`, `modelo`) en tabla `dispositivos_moviles`. Requiere **development build** para obtener token real (null en Expo Go). Lazy import de `expo-notifications` para evitar crash en Expo Go.
+
+**9.G 🔒 Pulido e integración final** — pendiente. No iniciar hasta que el usuario apruebe el estado de 9.C y 9.D.
+
+**Decisiones:**
+- Una sola app (no dos APKs): menú y tabs se muestran según rol.
+- `(conductor)/index.js` y `(agente)/index.js` de nivel raíz eliminados: Expo Router cae al tab navigator directamente.
+- `sesion-parqueo.js` eliminado: el inicio de sesión es inline en `validar-placa.js` (botón "Iniciar Sesión de Parqueo" con `iniciarSesion({ ticket_id })`).
+- Token almacenado en `expo-secure-store`; header Bearer aplicado globalmente en axios.
+- FCM best-effort: el login no depende de push.
 
 ## Fase 10 — Integraciones Externas
 
