@@ -28,9 +28,9 @@ class TarifaController extends Controller
 
     public function index(): View
     {
-        // Eager load: cada TipoPlaza con sus tarifas ordenadas desc por vigencia
+        // Eager load: cada TipoPlaza con sus tarifas (incluidas soft-deleted) ordenadas desc por vigencia
         $tiposPlaza = TipoPlaza::activos()
-            ->with(['tarifas' => fn ($q) => $q->orderBy('vigente_desde', 'desc')])
+            ->with(['tarifas' => fn ($q) => $q->withTrashed()->orderBy('vigente_desde', 'desc')])
             ->orderBy('nombre')
             ->get();
 
@@ -75,5 +75,13 @@ class TarifaController extends Controller
         return redirect()
             ->route('tarifas.index')
             ->with('success', "Tarifa '{$tarifa->nombre}' eliminada (soft delete).");
+    }
+
+    public function reactivar(Tarifa $tarifa): RedirectResponse
+    {
+        $tarifa->restore();
+        return redirect()
+            ->route('tarifas.index')
+            ->with('success', "Tarifa '{$tarifa->nombre}' restaurada correctamente.");
     }
 }

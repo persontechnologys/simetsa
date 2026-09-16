@@ -16,9 +16,9 @@ use App\Models\TransaccionPago;
 use App\Models\User;
 use App\Services\Pagos\PagoManager;
 use DomainException;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Lógica de negocio del módulo de infracciones y sanciones.
@@ -33,8 +33,10 @@ use Illuminate\Support\Facades\DB;
  */
 class InfraccionService
 {
-    public function __construct(private readonly PagoManager $pagoManager)
-    {
+    public function __construct(
+        private readonly PagoManager                    $pagoManager,
+        private readonly NotificacionInfraccionService  $notificacionService,
+    ) {
     }
     // ── Cálculo de multa ──────────────────────────────────────────────────────
 
@@ -130,7 +132,7 @@ class InfraccionService
         $sbu   = (float) Parametro::obtener('sbu_vigente', 460.00);
         $monto = $this->calcularMulta($tipo, $minutos, $sbu);
 
-        return DB::transaction(function () use ($datos, $agente, $tipo, $monto, $sbu) {
+        $infraccion = DB::transaction(function () use ($datos, $agente, $tipo, $monto, $sbu) {
             return Infraccion::create([
                 'placa'             => $datos['placa'],
                 'conductor_id'      => $datos['conductor_id'] ?? null,
@@ -145,12 +147,26 @@ class InfraccionService
                 'minutos_excedidos' => $tipo === TipoInfraccion::TiempoExcedido
                     ? (int) ($datos['minutos_excedidos'] ?? 0)
                     : null,
-                'descripcion'  => $datos['descripcion'] ?? null,
-                'foto_evidencia' => $datos['foto_evidencia'] ?? null,
-                'latitud'      => $datos['latitud'] ?? null,
-                'longitud'     => $datos['longitud'] ?? null,
+                'descripcion'   => $datos['descripcion'] ?? null,
+                'foto_evidencia'=> $datos['foto_evidencia'] ?? null,
+                'latitud'       => $datos['latitud'] ?? null,
+                'longitud'      => $datos['longitud'] ?? null,
             ]);
         });
+
+        // Boleta digital best-effort: si falla la notificación, no interrumpe el registro
+        if ($infraccion->conductor_id !== null) {
+            try {
+                $this->notificacionService->notificar($infraccion);
+            } catch (\Throwable $e) {
+                Log::warning('InfraccionService: notificacion al conductor fallida.', [
+                    'infraccion_id' => $infraccion->id,
+                    'error'         => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $infraccion;
     }
 
     /**

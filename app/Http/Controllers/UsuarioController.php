@@ -18,7 +18,8 @@ use Spatie\Permission\Models\Role;
  * Controlador del CRUD de usuarios del backoffice SIMETSA.
  *
  * Reglas:
- *  - Autorización vía UserPolicy aplicada automáticamente por authorizeResource().
+ *  - Autorización vía permisos Spatie en constructor + UserPolicy en acciones con
+ *    comprobaciones a nivel de modelo.
  *  - La lógica multi-tabla (User + PerfilUsuario + Spatie role) se delega al
  *    servicio UsuarioService dentro de DB::transaction.
  *  - destroy realiza una desactivación lógica (soft delete del perfil + activo=false).
@@ -28,11 +29,10 @@ class UsuarioController extends Controller
 {
     public function __construct(private UsuarioService $usuarioService)
     {
-        // Aplica UserPolicy a cada acción del resource controller
-        $this->authorizeResource(User::class, 'usuario');
-        
-        // Middleware adicional: reactivar solo accesible para usuarios con permiso 'usuarios.editar'
-        $this->middleware('permission:usuarios.editar')->only('reactivar');
+        $this->middleware('permission:usuarios.ver',      ['only' => ['index', 'show']]);
+        $this->middleware('permission:usuarios.crear',    ['only' => ['create', 'store']]);
+        $this->middleware('permission:usuarios.editar',   ['only' => ['edit', 'update', 'reactivar']]);
+        $this->middleware('permission:usuarios.eliminar', ['only' => ['destroy']]);
     }
 
     /**

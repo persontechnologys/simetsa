@@ -31,7 +31,16 @@ use App\Http\Controllers\CredencialDiscapacidadController;
 use App\Http\Controllers\TipoVehiculoController;
 use App\Http\Controllers\VehiculoController;
 use App\Http\Controllers\VehiculoExoneradoController;
+use App\Http\Controllers\CancelacionController;
+use App\Http\Controllers\InmovilizacionWebController;
+use App\Http\Controllers\SesionParqueoWebController;
+use App\Http\Controllers\TransaccionPagoWebController;
+use App\Http\Controllers\TurnoAgenteController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\ImpugnacionController;
+use App\Http\Controllers\OrdenPagoController;
+use App\Http\Controllers\ComprobanteController;
+use App\Http\Controllers\LiquidacionController;
 use App\Http\Controllers\Reportes\DashboardController;
 use App\Http\Controllers\Reportes\InfraccionesController;
 use App\Http\Controllers\Reportes\OcupacionController;
@@ -132,6 +141,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('tarifas', TarifaController::class)
             ->parameters(['tarifas' => 'tarifa'])
             ->except(['show']);
+        Route::patch('tarifas/{tarifa}/reactivar', [TarifaController::class, 'reactivar'])
+            ->name('tarifas.reactivar')
+            ->withTrashed();
         // ===== SIMETSA - Zonas tarifadas (Fase 2.D.1) =====
         Route::resource('zonas', ZonaController::class)
             ->parameters(['zonas' => 'zona'])
@@ -293,6 +305,8 @@ Route::middleware('auth')->group(function () {
 
         
         // ===== SIMETSA — Credenciales CONADIS backoffice (Fase 4.C, Art. 26) =====
+        Route::get('credenciales-discapacidad', [CredencialDiscapacidadController::class, 'index'])
+            ->name('credenciales-discapacidad.index');
         Route::patch('credenciales-discapacidad/{credencial_discapacidad}/aprobar',
             [CredencialDiscapacidadController::class, 'aprobar'])->name('credenciales-discapacidad.aprobar');
         Route::patch('credenciales-discapacidad/{credencial_discapacidad}/rechazar',
@@ -309,6 +323,8 @@ Route::middleware('auth')->group(function () {
             
 
         // ===== SIMETSA — Vehículos exonerados (Fase 4.D, Art. 27) =====
+        Route::patch('vehiculos-exonerados/{vehiculo_exonerado}/toggle', [VehiculoExoneradoController::class, 'toggle'])
+            ->name('vehiculos-exonerados.toggle');
         Route::resource('vehiculos-exonerados', VehiculoExoneradoController::class)
             ->parameters(['vehiculos-exonerados' => 'vehiculo_exonerado'])
             ->except(['show']);
@@ -326,6 +342,55 @@ Route::middleware('auth')->group(function () {
             ->parameters(['infracciones' => 'infraccion']);
         Route::patch('infracciones/{infraccion}/anular', [InfraccionController::class, 'anular'])
             ->name('infracciones.anular');
+
+        // ===== SIMETSA — Cancelaciones supervisión (Fase 9.5.3) =====
+        Route::resource('cancelaciones', CancelacionController::class)
+            ->only(['index', 'show'])
+            ->parameters(['cancelaciones' => 'cancelacion']);
+
+        // ===== SIMETSA — Sesiones de Parqueo supervisión (Fase 9.5.3) =====
+        Route::get('sesiones-parqueo', [SesionParqueoWebController::class, 'index'])
+            ->name('sesiones-parqueo.index');
+
+        // ===== SIMETSA — Inmovilizaciones supervisión (Fase 9.5.3, Art. 15) =====
+        Route::resource('inmovilizaciones', InmovilizacionWebController::class)
+            ->only(['index', 'show'])
+            ->parameters(['inmovilizaciones' => 'inmovilizacion']);
+        Route::patch('inmovilizaciones/{inmovilizacion}/liberar', [InmovilizacionWebController::class, 'liberar'])
+            ->name('inmovilizaciones.liberar');
+
+        // ===== SIMETSA — Transacciones de Pago supervisión (Fase 9.5.3, Art. 21) =====
+        Route::get('transacciones', [TransaccionPagoWebController::class, 'index'])
+            ->name('transacciones.index');
+
+        // ===== SIMETSA — Fiscalización: Turnos (Fase 9.5.4, Art. 38) =====
+        Route::resource('turnos', TurnoAgenteController::class)
+            ->only(['index', 'show'])
+            ->parameters(['turnos' => 'turno']);
+
+        // ===== SIMETSA — Impugnaciones (Fase 9.5.6, Art. 17.f) =====
+        Route::resource('impugnaciones', ImpugnacionController::class)
+            ->only(['index', 'show'])
+            ->parameters(['impugnaciones' => 'impugnacion']);
+        Route::patch('impugnaciones/{impugnacion}/admitir',  [ImpugnacionController::class, 'admitir'])
+            ->name('impugnaciones.admitir');
+        Route::patch('impugnaciones/{impugnacion}/rechazar', [ImpugnacionController::class, 'rechazar'])
+            ->name('impugnaciones.rechazar');
+        Route::patch('impugnaciones/{impugnacion}/resolver', [ImpugnacionController::class, 'resolver'])
+            ->name('impugnaciones.resolver');
+
+        // ===== SIMETSA — Órdenes de Pago (Fase 9.5.5, Art. 28) =====
+        Route::resource('ordenes-pago', OrdenPagoController::class)
+            ->only(['index', 'show'])
+            ->parameters(['ordenes-pago' => 'ordenPago']);
+        Route::patch('ordenes-pago/{ordenPago}/anular', [OrdenPagoController::class, 'anular'])
+            ->name('ordenes-pago.anular');
+
+        // ===== SIMETSA — Comprobantes supervisión (Fase 9.5.5, Art. 19) =====
+        Route::get('comprobantes', [ComprobanteController::class, 'index'])->name('comprobantes.index');
+
+        // ===== SIMETSA — Liquidaciones (Fase 9.5.5, Art. 21) =====
+        Route::get('liquidaciones', [LiquidacionController::class, 'index'])->name('liquidaciones.index');
 
         // ===== SIMETSA — Reportes (Fase 8) =====
         Route::prefix('reportes')->name('reportes.')->group(function () {

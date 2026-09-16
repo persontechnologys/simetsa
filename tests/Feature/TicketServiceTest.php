@@ -198,9 +198,9 @@ class TicketServiceTest extends TestCase
         Carbon::setTestNow(self::HORA_OPERATIVA);
         [$conductor, $vehiculo] = $this->crearConductorConVehiculo();
 
-        // Crear credencial CONADIS aprobada para el vehículo
+        // Crear credencial CONADIS aprobada para el conductor (Art. 26 — la credencial es del conductor, no del vehículo)
         CredencialDiscapacidad::factory()->aprobada()->create([
-            'vehiculo_id'      => $vehiculo->id,
+            'conductor_id'     => $conductor->id,
             'fecha_vencimiento' => null, // Sin vencimiento
         ]);
 
@@ -218,7 +218,7 @@ class TicketServiceTest extends TestCase
 
         // Credencial rechazada → no exonera
         CredencialDiscapacidad::factory()->rechazada()->create([
-            'vehiculo_id' => $vehiculo->id,
+            'conductor_id' => $conductor->id,
         ]);
 
         $ticket = $this->service->comprar($this->datosCompra($conductor->id, $vehiculo->id, 1));

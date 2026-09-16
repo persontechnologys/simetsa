@@ -6,7 +6,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -71,16 +70,6 @@ class Vehiculo extends Model
     public function tipoVehiculo(): BelongsTo
     {
         return $this->belongsTo(TipoVehiculo::class);
-    }
-
-    /**
-     * Credencial CONADIS más reciente del vehículo (Art. 26).
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function credencial(): HasOne
-    {
-        return $this->hasOne(CredencialDiscapacidad::class)->latest('id');
     }
 
     /** Etiqueta legible del estado para vistas Blade. */

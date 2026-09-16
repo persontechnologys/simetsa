@@ -60,6 +60,10 @@ class InfraccionResource extends JsonResource
                     ? new InmovilizacionResource($this->inmovilizacion)
                     : null,
             ),
+            'comprobante_id' => $this->whenLoaded(
+                'comprobante',
+                fn () => $this->comprobante?->id,
+            ),
         ];
     }
 }

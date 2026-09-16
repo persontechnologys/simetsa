@@ -47,7 +47,7 @@ class TicketController extends ApiController
         }
 
         $tickets = Ticket::where('conductor_id', $conductor->id)
-            ->whereIn('estado', ['pendiente', 'activo', 'en_tolerancia'])
+            ->whereIn('estado', ['pendiente_pago', 'pendiente', 'activo', 'en_tolerancia'])
             ->with(['vehiculo', 'zona', 'sesion'])
             ->orderByDesc('comprado_en')
             ->get();
@@ -80,11 +80,19 @@ class TicketController extends ApiController
             return $this->error($e->getMessage(), null, 422);
         }
 
-        return $this->exito(
-            new TicketResource($ticket->load(['vehiculo', 'zona'])),
-            'Ticket comprado correctamente.',
-            201,
-        );
+        $esDigital    = $ticket->proveedor->esDigital();
+        $esEfectivoOtp = $ticket->proveedor === \App\Enums\ProveedorPago::Efectivo;
+        $paymentUrl   = null;
+
+        if ($esDigital) {
+            $paymentUrl = $ticket->transacciones()->latest('id')->value('payment_url');
+        }
+
+        return $this->exito([
+            'ticket'      => new TicketResource($ticket->load(['vehiculo', 'zona'])),
+            'confirmado'  => ! $esDigital && ! $esEfectivoOtp,
+            'payment_url' => $paymentUrl,
+        ], 'Ticket comprado correctamente.', 201);
     }
 
     /**
@@ -123,7 +131,7 @@ class TicketController extends ApiController
         $this->authorize('view', $ticket);
 
         return $this->exito(
-            new TicketResource($ticket->load(['vehiculo', 'zona', 'calle', 'sesion', 'cancelacion'])),
+            new TicketResource($ticket->load(['vehiculo', 'zona', 'calle', 'sesion', 'cancelacion', 'comprobante', 'transacciones'])),
             'Detalle del ticket.',
         );
     }

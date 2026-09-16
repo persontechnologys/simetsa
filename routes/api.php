@@ -2,8 +2,12 @@
 // routes/api.php
 
 use App\Http\Controllers\Api\AgenteAuthController;
+use App\Http\Controllers\Api\ImpugnacionApiController as ApiImpugnacionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MovilAuthController;
+use App\Http\Controllers\Api\IncidenteCalleController as ApiIncidenteCalleController;
+use App\Http\Controllers\Api\RecorridoAgenteController as ApiRecorridoAgenteController;
+use App\Http\Controllers\Api\TurnoAgenteController as ApiTurnoAgenteController;
 use App\Http\Controllers\Api\ZonaApiController;
 use App\Http\Controllers\Api\CredencialDiscapacidadController as ApiCredencialDiscapacidadController;
 use App\Http\Controllers\Api\DispositivoMovilController as ApiDispositivoMovilController;
@@ -27,8 +31,13 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // --- Públicas ---
-    Route::post('registro', [AuthController::class, 'registrar'])->name('api.registro'); // Fase 4
+    Route::post('registro', [AuthController::class, 'registrar'])->name('api.registro');
     Route::post('login',    [AuthController::class, 'login'])->name('api.login');
+
+    // Comprobante PDF público con token de un solo uso (5 min) — generado desde la app autenticada
+    Route::get('comprobantes/ver/{token}', [App\Http\Controllers\Api\ComprobanteApiController::class, 'pdfPublico'])
+        ->name('api.comprobantes.pdf-publico')
+        ->where('token', '[a-zA-Z0-9]+');
 
     // ===== Fase 9.B — Auth agente de parqueo (legacy, se mantiene) =====
     Route::post('agente/auth/login', [AgenteAuthController::class, 'login'])->name('api.agente.login');
@@ -72,8 +81,8 @@ Route::prefix('v1')->group(function () {
             
 
         // ===== Fase 4.C — Credencial CONADIS del conductor (Art. 26) =====
-        Route::post('vehiculos/{vehiculo}/credencial',  [ApiCredencialDiscapacidadController::class, 'store'])->name('api.credencial.store'); //url: /api/v1/vehiculos/{vehiculo}/credencial
-        Route::get('vehiculos/{vehiculo}/credencial',   [ApiCredencialDiscapacidadController::class, 'show'])->name('api.credencial.show');
+        Route::get('conductor/credencial',  [ApiCredencialDiscapacidadController::class, 'show'])->name('api.credencial.show');
+        Route::post('conductor/credencial', [ApiCredencialDiscapacidadController::class, 'store'])->name('api.credencial.store');
 
         // ===== Fase 5.C — Tickets del conductor (Arts. 13, 14, 19, 22) =====
         // IMPORTANTE: rutas estáticas bajo /tickets ANTES de la ruta con parámetro {ticket}
@@ -130,6 +139,48 @@ Route::prefix('v1')->group(function () {
         Route::post('infracciones/{infraccion}/pagar', [ApiInfraccionController::class, 'pagar'])
             ->middleware('permission:infracciones.ver')
             ->name('api.infracciones.pagar');
+
+        // ===== Fase 9.5.4 — Fiscalización: Turnos, Recorridos, Incidentes (Art. 38) =====
+        // IMPORTANTE: ruta estática /turnos/activo ANTES de la ruta con parámetro {turno}
+        Route::get('turnos/activo', [ApiTurnoAgenteController::class, 'activo'])
+            ->middleware('permission:turnos.ver')
+            ->name('api.turnos.activo');
+        Route::post('turnos', [ApiTurnoAgenteController::class, 'store'])
+            ->middleware('permission:turnos.iniciar')
+            ->name('api.turnos.store');
+        Route::patch('turnos/{turno}/finalizar', [ApiTurnoAgenteController::class, 'finalizar'])
+            ->middleware('permission:turnos.iniciar')
+            ->name('api.turnos.finalizar');
+
+        Route::post('recorridos', [ApiRecorridoAgenteController::class, 'store'])
+            ->middleware('permission:turnos.iniciar')
+            ->name('api.recorridos.store');
+
+        Route::post('incidentes', [ApiIncidenteCalleController::class, 'store'])
+            ->middleware('permission:incidentes.registrar')
+            ->name('api.incidentes.store');
+
+        // ===== Fase 9.5.5 — Comprobantes y Órdenes de Pago (Arts. 19, 28) =====
+        Route::get('comprobantes/{comprobante}',      [App\Http\Controllers\Api\ComprobanteApiController::class, 'show'])->name('api.comprobantes.show');
+        Route::get('comprobantes/{comprobante}/pdf',  [App\Http\Controllers\Api\ComprobanteApiController::class, 'pdf'])->name('api.comprobantes.pdf');
+        Route::get('comprobantes/{comprobante}/link', [App\Http\Controllers\Api\ComprobanteApiController::class, 'generarLink'])->name('api.comprobantes.link');
+        Route::post('ordenes-pago',                   [App\Http\Controllers\Api\OrdenPagoApiController::class,  'store'])->name('api.ordenes-pago.store');
+
+        // ===== Fase 9.5.6 — Impugnaciones de infracciones (Art. 17.f) =====
+        Route::post('infracciones/{infraccion}/impugnacion', [ApiImpugnacionController::class, 'store'])
+            ->middleware('permission:impugnaciones.registrar')
+            ->name('api.impugnaciones.store');
+        Route::get('infracciones/{infraccion}/impugnacion', [ApiImpugnacionController::class, 'show'])
+            ->middleware('permission:impugnaciones.ver')
+            ->name('api.impugnaciones.show');
+
+        // ===== Pago en efectivo OTP — conductor solicita código, agente confirma (Arts. 14, 19) =====
+        Route::post('pagos/efectivo/solicitar', [App\Http\Controllers\Api\PagoEfectivoController::class, 'solicitar'])
+            ->middleware('permission:pagos.ver')
+            ->name('api.pagos.efectivo.solicitar');
+        Route::post('pagos/efectivo/confirmar', [App\Http\Controllers\Api\PagoEfectivoController::class, 'confirmar'])
+            ->middleware('permission:pagos.registrar')
+            ->name('api.pagos.efectivo.confirmar');
 
         // ===== Fase 5.G — Dispositivos móviles FCM (placeholder; envío real en Fase 6) =====
         Route::post('dispositivos', [ApiDispositivoMovilController::class, 'store'])

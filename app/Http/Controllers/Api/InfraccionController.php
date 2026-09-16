@@ -12,10 +12,13 @@ use App\Http\Resources\InfraccionResource;
 use App\Models\AgenteParqueo;
 use App\Models\Conductor;
 use App\Models\Infraccion;
+use App\Enums\EstadoTransaccion;
+use App\Services\ComprobanteService;
 use App\Services\InfraccionService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Endpoints de infracciones y candado inmovilizador para la app del agente en calle.
@@ -32,8 +35,10 @@ use Illuminate\Http\Request;
  */
 class InfraccionController extends ApiController
 {
-    public function __construct(private readonly InfraccionService $servicio)
-    {
+    public function __construct(
+        private readonly InfraccionService   $servicio,
+        private readonly ComprobanteService  $comprobanteService,
+    ) {
     }
 
     /**
@@ -75,7 +80,7 @@ class InfraccionController extends ApiController
 
         return $this->exito(
             new InfraccionResource(
-                $infraccion->load(['agente', 'zona', 'calle', 'conductor', 'inmovilizacion'])
+                $infraccion->load(['agente', 'zona', 'calle', 'conductor', 'inmovilizacion', 'comprobante'])
             ),
             'Detalle de la infracción.',
         );
@@ -199,7 +204,24 @@ class InfraccionController extends ApiController
             return $this->error($e->getMessage(), null, 422);
         }
 
+        // Proveedores sin gateway (none, manual) confirman el pago al instante.
+        // Acreditar aquí, igual que lo hace el PagoWebhookController para gateways externos.
+        $comprobanteId = null;
+        if ($transaccion->estado === EstadoTransaccion::Completada) {
+            $transaccion->concepto->acreditar($transaccion);
+            try {
+                $comprobante   = $this->comprobanteService->generar($transaccion->concepto, $transaccion);
+                $comprobanteId = $comprobante->id;
+            } catch (\Throwable $e) {
+                Log::error('pagar: error al generar comprobante', [
+                    'transaccion_id' => $transaccion->id,
+                    'error'          => $e->getMessage(),
+                ]);
+            }
+        }
+
         return $this->exito([
+            'confirmado'        => $transaccion->estado === EstadoTransaccion::Completada,
             'transaccion_id'    => $transaccion->id,
             'estado'            => $transaccion->estado->value,
             'monto'             => $transaccion->monto,
@@ -207,6 +229,11 @@ class InfraccionController extends ApiController
             'payment_url'       => $transaccion->payment_url,
             'qr_payload'        => $transaccion->qr_payload,
             'external_reference'=> $transaccion->external_reference,
-        ], 'Pago iniciado. Completa el pago en el gateway.', 201);
+            'comprobante_id'    => $comprobanteId,
+        ], $transaccion->estado === EstadoTransaccion::Completada
+            ? 'Pago confirmado.'
+            : 'Pago iniciado. Completa el pago en el gateway.',
+            201,
+        );
     }
 }

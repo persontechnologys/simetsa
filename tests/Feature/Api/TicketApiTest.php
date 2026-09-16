@@ -182,9 +182,10 @@ class TicketApiTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('exito', true)
-            ->assertJsonPath('datos.horas_compradas', 1)
-            ->assertJsonPath('datos.monto', 0.25)
-            ->assertJsonPath('datos.estado', 'pendiente');
+            ->assertJsonPath('datos.ticket.horas_compradas', 1)
+            ->assertJsonPath('datos.ticket.monto', 0.25)
+            ->assertJsonPath('datos.ticket.estado', 'pendiente')
+            ->assertJsonPath('datos.confirmado', true);
 
         $this->assertDatabaseHas('tickets', ['conductor_id' => $conductor->id]);
     }

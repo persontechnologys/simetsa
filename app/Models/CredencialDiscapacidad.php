@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * CredencialDiscapacidadService::solicitar().
  *
  * @property int         $id
- * @property int         $vehiculo_id
+ * @property int         $conductor_id
  * @property string      $numero_conadis
  * @property int|null    $porcentaje_discapacidad
  * @property string      $nombre_beneficiario
@@ -43,7 +43,7 @@ class CredencialDiscapacidad extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'vehiculo_id', 'numero_conadis', 'porcentaje_discapacidad',
+        'conductor_id', 'numero_conadis', 'porcentaje_discapacidad',
         'nombre_beneficiario', 'fecha_emision', 'fecha_vencimiento',
         'ruta_archivo', 'estado', 'observaciones',
         'aprobada_por', 'fecha_aprobacion',
@@ -59,13 +59,13 @@ class CredencialDiscapacidad extends Model
     ];
 
     /**
-     * Vehículo al que pertenece esta credencial.
+     * Conductor al que pertenece esta credencial.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function vehiculo(): BelongsTo
+    public function conductor(): BelongsTo
     {
-        return $this->belongsTo(Vehiculo::class);
+        return $this->belongsTo(Conductor::class);
     }
 
     /**

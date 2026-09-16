@@ -123,6 +123,36 @@ class VehiculoExoneradoControllerTest extends TestCase
         $this->assertEquals('BOM-0002', $vehiculo->fresh()->placa);
     }
 
+    // ===== Toggle activar/suspender (Art. 27) =====
+
+    public function test_comisario_puede_suspender_exoneracion_activa(): void
+    {
+        $vehiculo = VehiculoExonerado::factory()->create([
+            'registrado_por' => $this->comisarioUser()->id,
+            'activo'         => true,
+        ]);
+
+        $this->actingAs($this->comisarioUser())
+            ->patch(route('vehiculos-exonerados.toggle', $vehiculo))
+            ->assertRedirect();
+
+        $this->assertFalse($vehiculo->fresh()->activo);
+    }
+
+    public function test_comisario_puede_activar_exoneracion_suspendida(): void
+    {
+        $vehiculo = VehiculoExonerado::factory()->create([
+            'registrado_por' => $this->comisarioUser()->id,
+            'activo'         => false,
+        ]);
+
+        $this->actingAs($this->comisarioUser())
+            ->patch(route('vehiculos-exonerados.toggle', $vehiculo))
+            ->assertRedirect();
+
+        $this->assertTrue($vehiculo->fresh()->activo);
+    }
+
     // ===== Eliminación =====
 
     public function test_comisario_puede_eliminar_vehiculo_exonerado(): void

@@ -61,7 +61,6 @@ class PuntoVentaService
   - Si la cédula ya pertenece a un usuario y el correo es distinto/nuevo → `DomainException` explicando a qué cuenta pertenece.
   - Si el correo existe pero su perfil tiene otra cédula → `DomainException`.
   - Si nada existe → crear usuario + perfil con la cédula.
-  - `AgenteParqueoService` aún **no** aplica este patrón — está anotado en la deuda técnica del `CLAUDE.md` raíz.
 
 - **Generación de códigos**: helper `generarCodigo()` por servicio (`PV-XXXX`, `AG-XXXX`, `SPV-XXXX`, `SA-XXXX`, `CUR-XXXX`, etc.) usando `withTrashed()->max('id') + 1` con `str_pad`.
 

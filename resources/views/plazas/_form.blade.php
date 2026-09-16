@@ -1,7 +1,7 @@
 {{-- resources/views/plazas/_form.blade.php --}}
 @php
-    $p     = $plaza ?? null;
-    $modo  = $modo ?? 'crear';
+    $p = $plaza ?? null;
+    $modo = $modo ?? 'crear';
     $zonaP = $p?->zona ?? $zonas->first();
     $centroMapa = $p?->tieneUbicacion()
         ? [$p->latitud, $p->longitud]
@@ -10,37 +10,47 @@
 @endphp
 
 <div class="row g-4">
-    {{-- Datos de la plaza --}}
-    <div class="col-lg-4">
+
+    {{-- =========================================
+         Sección 1: Datos de la plaza
+         ========================================= --}}
+    <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h6 text-simetsa mb-3"><i class="bi bi-info-circle me-1"></i> Datos de la plaza</h2>
+            <div class="card-header bg-transparent border-bottom-0 pt-4 px-4 pb-0">
+                <h2 class="h6 text-uppercase fw-bold text-muted mb-0 title-tracking">
+                    <i class="bi bi-info-circle me-2 text-dark fs-5 align-middle"></i>Datos de la plaza
+                </h2>
+            </div>
+            <div class="card-body p-4">
 
-                <div class="mb-3">
-                    <label for="zona_id" class="form-label">Zona *</label>
-                    <select name="zona_id" id="zona_id" class="form-select @error('zona_id') is-invalid @enderror" required>
-                        <option value="">— Seleccione —</option>
-                        @foreach($zonas as $z)
-                            <option value="{{ $z->id }}" @selected(old('zona_id', $p?->zona_id) == $z->id)>{{ $z->nombre }}</option>
-                        @endforeach
-                    </select>
-                    @error('zona_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                {{-- Zona y Tipo de Plaza --}}
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-6">
+                        <label for="zona_id" class="form-label small fw-medium text-dark">Zona <span class="text-danger">*</span></label>
+                        <select name="zona_id" id="zona_id" class="form-select @error('zona_id') is-invalid @enderror" required>
+                            <option value="">— Seleccione una zona —</option>
+                            @foreach($zonas as $z)
+                                <option value="{{ $z->id }}" @selected(old('zona_id', $p?->zona_id) == $z->id)>{{ $z->nombre }}</option>
+                            @endforeach
+                        </select>
+                        @error('zona_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label for="tipo_plaza_id" class="form-label small fw-medium text-dark">Tipo de plaza <span class="text-danger">*</span></label>
+                        <select name="tipo_plaza_id" id="tipo_plaza_id" class="form-select @error('tipo_plaza_id') is-invalid @enderror" required>
+                            <option value="">— Seleccione un tipo —</option>
+                            @foreach($tiposPlaza as $t)
+                                <option value="{{ $t->id }}" @selected(old('tipo_plaza_id', $p?->tipo_plaza_id) == $t->id)>{{ $t->nombre }}</option>
+                            @endforeach
+                        </select>
+                        @error('tipo_plaza_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="tipo_plaza_id" class="form-label">Tipo de plaza *</label>
-                    <select name="tipo_plaza_id" id="tipo_plaza_id" class="form-select @error('tipo_plaza_id') is-invalid @enderror" required>
-                        <option value="">— Seleccione —</option>
-                        @foreach($tiposPlaza as $t)
-                            <option value="{{ $t->id }}" @selected(old('tipo_plaza_id', $p?->tipo_plaza_id) == $t->id)>{{ $t->nombre }}</option>
-                        @endforeach
-                    </select>
-                    @error('tipo_plaza_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label for="calle_id" class="form-label">Calle</label>
+                {{-- Calle y Manzana --}}
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-6">
+                        <label for="calle_id" class="form-label small fw-medium text-dark">Calle</label>
                         <select name="calle_id" id="calle_id" class="form-select @error('calle_id') is-invalid @enderror">
                             <option value="">— Ninguna —</option>
                             @foreach($calles as $c)
@@ -49,8 +59,8 @@
                         </select>
                         @error('calle_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-6">
-                        <label for="manzana_id" class="form-label">Manzana</label>
+                    <div class="col-12 col-sm-6">
+                        <label for="manzana_id" class="form-label small fw-medium text-dark">Manzana</label>
                         <select name="manzana_id" id="manzana_id" class="form-select @error('manzana_id') is-invalid @enderror">
                             <option value="">— Ninguna —</option>
                             @foreach($manzanas as $mz)
@@ -61,46 +71,47 @@
                     </div>
                 </div>
 
-                <div class="row g-2 mt-1">
-                    <div class="col-6">
-                        <label for="codigo" class="form-label">Código *</label>
+                {{-- Código y Número Visible --}}
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-6">
+                        <label for="codigo" class="form-label small fw-medium text-dark">Código <span class="text-danger">*</span></label>
                         <input type="text" name="codigo" id="codigo"
                                class="form-control @error('codigo') is-invalid @enderror"
-                               value="{{ old('codigo', $p?->codigo) }}" required>
-                        <small class="form-text text-muted">Ej: <code>VL-01</code></small>
+                               value="{{ old('codigo', $p?->codigo) }}" placeholder="Ej. VL-01" required>
                         @error('codigo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-6">
-                        <label for="numero" class="form-label">N.º visible</label>
+                    <div class="col-12 col-sm-6">
+                        <label for="numero" class="form-label small fw-medium text-dark">N.º visible</label>
                         <input type="text" name="numero" id="numero"
                                class="form-control @error('numero') is-invalid @enderror"
-                               value="{{ old('numero', $p?->numero) }}">
+                               value="{{ old('numero', $p?->numero) }}" placeholder="Ej. 01">
                         @error('numero')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
-                {{-- Dimensiones: ancho (Art. 6) + largo (técnico) --}}
-                <div class="row g-2 mt-1">
-                    <div class="col-6">
-                        <label for="ancho_metros" class="form-label">Ancho (m)</label>
+                {{-- Dimensiones: ancho (Art. 6) + largo --}}
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-6">
+                        <label for="ancho_metros" class="form-label small fw-medium text-dark">Ancho (m)</label>
                         <input type="number" step="0.01" min="2.20" max="2.50" name="ancho_metros" id="ancho_metros"
                                class="form-control @error('ancho_metros') is-invalid @enderror"
                                value="{{ old('ancho_metros', $p?->ancho_metros) }}">
-                        <small class="form-text text-muted">Art. 6: 2.20–2.50</small>
+                        <span class="form-text text-muted fs-7">Art. 6: 2.20–2.50 m</span>
                         @error('ancho_metros')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-6">
-                        <label for="largo_metros" class="form-label">Largo (m)</label>
+                    <div class="col-12 col-sm-6">
+                        <label for="largo_metros" class="form-label small fw-medium text-dark">Largo (m)</label>
                         <input type="number" step="0.01" min="3.00" max="15.00" name="largo_metros" id="largo_metros"
                                class="form-control @error('largo_metros') is-invalid @enderror"
                                value="{{ old('largo_metros', $p?->largo_metros) }}">
-                        <small class="form-text text-muted">3.00–15.00 (auto a carga)</small>
+                        <span class="form-text text-muted fs-7">3.00–15.00 m (auto a carga)</span>
                         @error('largo_metros')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
-                <div class="mt-2">
-                    <label for="orientacion" class="form-label">Orientación *</label>
+                {{-- Orientación --}}
+                <div class="mb-3">
+                    <label for="orientacion" class="form-label small fw-medium text-dark">Orientación <span class="text-danger">*</span></label>
                     <select name="orientacion" id="orientacion" class="form-select @error('orientacion') is-invalid @enderror" required>
                         @foreach($orientaciones as $v => $e)
                             <option value="{{ $v }}" @selected(old('orientacion', $p?->orientacion ?? 'paralelo') === $v)>{{ $e }}</option>
@@ -109,39 +120,53 @@
                     @error('orientacion')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Lat/Lng: editables a mano y sincronizadas con el mapa --}}
-                <div class="row g-2 mt-2">
-                    <div class="col-6">
-                        <label for="plaza_latitud" class="form-label">Latitud</label>
+                {{-- Latitud y Longitud: editables a mano y sincronizadas con el mapa --}}
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-6">
+                        <label for="plaza_latitud" class="form-label small fw-medium text-dark">Latitud</label>
                         <input type="number" step="0.0000001" name="latitud" id="plaza_latitud"
-                               class="form-control @error('latitud') is-invalid @enderror"
+                               class="form-control font-monospace @error('latitud') is-invalid @enderror"
                                value="{{ old('latitud', $p?->latitud) }}">
                         @error('latitud')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-6">
-                        <label for="plaza_longitud" class="form-label">Longitud</label>
+                    <div class="col-12 col-sm-6">
+                        <label for="plaza_longitud" class="form-label small fw-medium text-dark">Longitud</label>
                         <input type="number" step="0.0000001" name="longitud" id="plaza_longitud"
-                               class="form-control @error('longitud') is-invalid @enderror"
+                               class="form-control font-monospace @error('longitud') is-invalid @enderror"
                                value="{{ old('longitud', $p?->longitud) }}">
                         @error('longitud')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
-                <div class="form-check form-switch mt-3">
-                    <input type="hidden" name="activo" value="0">
-                    <input class="form-check-input" type="checkbox" name="activo" id="activo" value="1"
-                           @checked(old('activo', $p?->activo ?? true))>
-                    <label for="activo" class="form-check-label small">Activa</label>
+                {{-- Estado --}}
+                <div class="mb-0 pt-2">
+                    <label class="form-label small fw-medium text-dark d-block mb-2">Estado</label>
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="activo" value="0">
+                        <input class="form-check-input" type="checkbox" name="activo" id="activo" value="1"
+                               @checked(old('activo', $p?->activo ?? true))>
+                        <label for="activo" class="form-check-label small">Plaza activa</label>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
 
-    {{-- Selector de ubicación con referencias --}}
-    <div class="col-lg-8">
+    {{-- =========================================
+         Sección 2: Ubicación con mapa
+         ========================================= --}}
+    <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h6 text-simetsa mb-3"><i class="bi bi-pin-map me-1"></i> Ubicación de la plaza</h2>
+            <div class="card-header bg-transparent border-bottom-0 pt-4 px-4 pb-0">
+                <h2 class="h6 text-uppercase fw-bold text-muted mb-0 title-tracking">
+                    <i class="bi bi-pin-map me-2 text-dark fs-5 align-middle"></i>Ubicación de la plaza
+                </h2>
+            </div>
+            <div class="card-body p-4">
+                <span class="form-text text-muted fs-7 d-block mb-3">
+                    <i class="bi bi-info-circle me-1"></i> Haz clic en el mapa para establecer la ubicación.
+                </span>
                 @include('partials.mapa-punto', [
                     'id'          => 'plaza',
                     'latInputId'  => 'plaza_latitud',
@@ -158,12 +183,16 @@
             </div>
         </div>
     </div>
+
 </div>
 
-<div class="mt-4 d-flex justify-content-end gap-2">
-    <a href="{{ route('plazas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
-    <button type="submit" class="btn btn-simetsa">
-        <i class="bi bi-check-circle me-1"></i>
+{{-- 3. Botones de acción / Footer --}}
+<div class="mt-4 d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm border border-light-subtle">
+    <a href="{{ route('plazas.index') }}" class="btn btn-light text-secondary border-light-subtle" title="Cancelar y regresar al listado">
+        <i class="bi bi-arrow-left me-1"></i> Cancelar y volver
+    </a>
+    <button type="submit" class="btn btn-dark px-4" title="{{ $modo === 'crear' ? 'Confirmar creación' : 'Guardar actualizaciones' }}">
+        <i class="bi bi-floppy me-1"></i>
         {{ $modo === 'crear' ? 'Crear plaza' : 'Guardar cambios' }}
     </button>
 </div>

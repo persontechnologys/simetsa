@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -38,6 +39,17 @@ class Conductor extends Model
     public function vehiculos(): HasMany
     {
         return $this->hasMany(Vehiculo::class);
+    }
+
+    /**
+     * Credencial CONADIS activa del conductor (Art. 26).
+     * Devuelve la más reciente (pendiente, aprobada o rechazada).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function credencial(): HasOne
+    {
+        return $this->hasOne(CredencialDiscapacidad::class)->latest('id');
     }
 
     /**

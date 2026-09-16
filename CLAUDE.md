@@ -5,10 +5,12 @@ Base legal: **Ordenanza SIMETSA**, GAD Municipal de Salcedo, aprobada **06-feb-2
 **Citar el artículo correspondiente** en PHPDoc/comentarios cuando una regla provenga de la Ordenanza.
 Texto canónico: `docs/legal/Ordenanza_SIMETSA.pdf`. Resumen operativo (artículo por artículo) para consulta rápida: `docs/legal/ordenanza-simetsa.md`.
 
-Dos productos:
+Dos productos en dos repositorios:
 
-1. **Plataforma Web (Backoffice)** — administración municipal, Comisaría, Dirección de Seguridad, agentes y puntos de venta.
-2. **Aplicación Móvil** — conductores y agentes en calle (consume la API REST).
+1. **Plataforma Web (Backoffice)** — administración municipal, Comisaría, Dirección de Seguridad, agentes y puntos de venta. Ruta local: `/home/persontech/workspace/simetsa`
+2. **Aplicación Móvil** — conductores y agentes en calle (consume la API REST). Ruta local: `/home/persontech/workspace/simetsa-movil`
+
+> Al trabajar en cualquier tarea que involucre la app móvil, abrir TAMBIÉN el proyecto `/workspace/simetsa-movil`.
 
 ---
 
@@ -101,6 +103,14 @@ Cédulas válidas para tests: `1710034065`, `1102345677`. En tests de activació
 - **Fase 7** ✓ Infracciones e Inmovilización. 7.A modelos/migraciones/enums (TipoInfraccion 12 casos, EstadoInfraccion, EstadoInmovilizacion) + Infraccion implements Cobrable + Inmovilizacion 1:1. 7.B InfraccionService (calcularMulta Arts. 28–30, registrar, inmovilizar, liberar, anular). 7.C API agente (POST /infracciones, GET /{id}, POST /{id}/inmovilizar, POST /{id}/liberar). 7.D API conductor (GET /conductor/infracciones, POST /{id}/pagar vía PagoManager; webhook genérico acredita y libera candado Art. 15). 7.E Backoffice web (index con 7 filtros, show + inmovilización + transacciones embebidas, anular modal). Cleanup: docs/api/infracciones.md completo (agente + conductor), InmovilizacionSeeder implementado, stub huérfano eliminado. 80 tests nuevos, 473 total. Decisiones: TipoInfraccion BackedEnum PHP 8.2 (12 casos cerrados por Ordenanza), Inmovilizacion entidad propia 1:1, monto_multa snapshot con sbu_vigente, NegarPago (Art. 17.g) sin cargo económico, conductor_id nullable.
 - **Fase 8** ✓ Reportes y Dashboard. 8.A Dashboard KPIs (6 tarjetas + 3 gráficos Chart.js, polling AJAX 60 s, cache 5 min). 8.B Reporte de Recaudación (filtros: fecha/tipo/proveedor/zona, tabla paginada, Excel via Maatwebsite, PDF Blade imprimible, layout `impresion`). 8.C Reporte de Infracciones (filtros: fecha/estado/tipo/zona/agente, inmovilizaciones, Excel + PDF). 8.D Reporte de Ocupación (barras por día/hora, doughnut por zona, totales: sesiones, duración promedio, hora pico). Paquete nuevo: `maatwebsite/excel`. 56 tests nuevos, 529 total. Decisiones: Maatwebsite para Excel + Blade imprimible para PDF (sin binarios externos), Cache Laravel 5 min para KPIs, queries directas con `whereHasMorph` para filtro zona en recaudación, JSON_PRESERVE_ZERO_FRACTION en endpoint kpis, dashboard accesible a todos los roles (KPIs visibles solo con `kpi.ver`).
 - **Fase 9** ✓ App Móvil Expo SDK 56 (`/workspace/simetsa-movil`, JS puro). 9.A ✓ Scaffolding. 9.B ✓ Auth global unificada (MovilAuthController + AuthContext con hasRole/can, 544 tests). 9.C ✓ App conductor (5 tabs + comprar ticket + historial + detalles). 9.D ✓ App agente (5 tabs + validar placa + infracciones + inicio sesión inline Art. 16). 9.E ✓ Mapa OSM con polígono de zona + GPS. 9.F ✓ FCM directo (development build). 9.G ✓ Pulido: 8 stubs eliminados (routing limpio), pago_simulado gateado con __DEV__, EXPO_PUBLIC_API_URL env var, eas.json. 21/21 expo-doctor. Docs: `docs/api/movil-auth.md`, `docs/mobile/auth-global.md`.
+- **Fase 9.5** ✓ Auditoría funcional y cierre de módulos críticos. **FASE 9.5 COMPLETAMENTE CERRADA** (2026-06-08). **Fase 10 desbloqueada.** Ver `docs/plan-fases-post-9.md`. Auditoría base: `docs/auditoria-fase-9-5-pre-fase10.md`. Stubs de integración: `app/Services/integraciones/`.
+  - **9.5.1** ✓ Auditoría y documentación (matriz de brechas, plan, auditoría multirol).
+  - **9.5.2** ✓ Fix multi-rol app móvil. `activeRole`/`setActiveRole` en `AuthContext`, pantalla `selector-rol.js`, guards en layouts conductor/agente, botones "Cambiar modo" en perfiles. 8 archivos en `/workspace/simetsa-movil`.
+  - **9.5.3** ✓ Vistas backoffice + tests. `CancelacionController`, `SesionParqueoWebController`, `InmovilizacionWebController`, `TransaccionPagoWebController`. `LiberarInmovilizacionRequest`. 6 vistas Blade (index+show cancelaciones e inmovilizaciones, index sesiones y transacciones). Breadcrumbs. `CancelacionTest` (12) + `InmovilizacionTest` (14). `UsuarioController`/`RolController` migrados de `authorizeResource` a `$this->middleware()` en constructor. 26 tests nuevos, 570 total.
+  - **9.5.4** ✓ Módulo Fiscalización — 3 modelos (TurnoAgente, RecorridoAgente, IncidenteCalle), 2 enums (EstadoTurno, TipoIncidente), FiscalizacionService (5 métodos), EcuNovecentonceService stub (Art. 38.m), 3 API controllers (5 endpoints), web TurnoAgenteController (index+show con mapa Leaflet+recorrido), 7 tests pasan, 577 total. App móvil: card turno+GPS periódico 60s en dashboard agente, pantalla reportar-incidente.js. Docs: docs/api/fiscalizacion.md.
+  - **9.5.5** ✓ Órdenes de Pago y Comprobantes (Arts. 19, 21, 28). 4 modelos (OrdenPago, Comprobante, LiquidacionAgente, LiquidacionPuntoVenta) + 1 enum (EstadoOrdenPago). OrdenPagoService (generar/anular/verificarVencimientos), ComprobanteService (generar idempotente + PDF Blade), LiquidacionService (agente 60% / PV 90%). Webhook actualizado: genera comprobante al acreditar (Art. 19). API: GET/PDF comprobantes + POST ordenes-pago. Backoffice: vistas ordenes-pago (index+show+anular), comprobantes (index), liquidaciones (index). 7 tests nuevos, 584 total. Decisiones: PDF = HTML imprimible layout 'impresion' (sin PDF libs), withTrashed() removido (modelos sin SoftDeletes), monto_bruto PV = 0 hasta añadir punto_venta_id en tickets.
+  - **9.5.6** ✓ Impugnaciones y Notificaciones de Infracción (Art. 17.f). 2 modelos (Impugnacion, NotificacionInfraccion) + 2 tablas. ImpugnacionService (presentar/admitir/rechazar/resolver). NotificacionInfraccionService (best-effort: crea boleta + intenta push FCM, nunca interrumpe el flujo principal). InfraccionService::registrar() actualizado con trigger de notificación. 2 API endpoints (POST/GET /infracciones/{id}/impugnacion). Web ImpugnacionController (index+show+admitir+rechazar+resolver, `$this->middleware()` en constructor). 2 vistas Blade. App móvil: detalle-infraccion.js con botón "Impugnar" + modal de motivo + estado de impugnación existente. 8 tests nuevos, 592 total. Decisiones: FCM best-effort (falla silenciosa en NotificacionInfraccionService), ImpugnacionResource extiende ApiController, permisos ya estaban en config/simetsa_permisos.php y RolPermisoSeeder.
+  - **9.5.7** ✓ QA funcional + preparación Fase 10. 7 grupos de tests en verde (592 tests). Deuda técnica resuelta: `AgenteParqueoFactory` completa con campos realistas + estados `suspendido`/`terminado`; `VehiculoExonerado` toggle activar/desactivar (Art. 27) — ruta PATCH, controller, vista, 2 tests; docs `AgenteParqueoService` actualizados. 3 stubs de integración creados en `app/Services/integraciones/`: `ConadisService` (Art. 26), `AntService`, `TesoreriaService` (Arts. 19, 21).
 
 Roadmap completo (Fases 4–11 con detalle): ver `docs/roadmap-fases.md`.
 Inventario de los ~55-60 modelos por módulo: ver `docs/inventario-modelos.md`.
@@ -109,17 +119,16 @@ Inventario de los ~55-60 modelos por módulo: ver `docs/inventario-modelos.md`.
 
 ## Deuda técnica abierta
 
-- **`AgenteParqueoService::autorizar`** usa el patrón viejo de creación de perfil sin resolver identidad por cédula. Aplicar el mismo arreglo que `PuntoVentaService::activar` (resolución **cédula → correo → crear**) al volver sobre Fase 3. Alternativa: extraer un `ResolutorCuentaService` compartido.
-- `UsuarioController` y `RolController` (Fase 1) usan `authorizeResource` en constructor (incompatible con Laravel 11); migrar a `HasMiddleware`.
+- **Patrón de autorización en controllers**: el proyecto usa `$this->middleware()` en constructor (NO el patrón estático `HasMiddleware`) porque `Illuminate\Routing\Controller::middleware()` es no-estático y PHP no permite sobreescribirlo con estático. `UsuarioController` y `RolController` ya migrados (Fase 9.5.3).
 - **Comando `simetsa:marcar-credenciales-vencidas`**: transicionar credenciales CONADIS con `fecha_vencimiento < today()` a estado `vencida`. Pendiente de mantenimiento.
-- **`VehiculoExonerado` sin suspensión temporal**: agregar acción `activar/desactivar` si el comisario necesita suspender una exoneración sin eliminarla (actualmente solo hay `activo` boolean).
 - **`sesiones_parqueo.ver` no asignado a conductor**: el conductor ve la sesión embebida en `TicketResource` (relación `whenLoaded`); no tiene acceso directo al endpoint `/sesiones-parqueo/{id}`.
 - **Reembolsos Deuna pendientes sin procesador**: `Cancelacion.estado_reembolso = pendiente` queda sin acción automática hasta integrar el endpoint de reembolso de Deuna (requiere credenciales reales; Fase 8 o posterior).
 - **Notificación push al acreditar ticket**: `Ticket::acreditar()` no dispara notificación TIPO_EXPIRA_PRONTO todavía (pendiente activar `NotificacionPushService` en ese punto).
 - **Notificación push al acreditar multa**: `Infraccion::acreditar()` no dispara push FCM al conductor cuando el pago se confirma por webhook (misma deuda que Ticket; aplica si `conductor_id` no es null). Pendiente para Fase 9.
 - **`NegarPago` (Art. 17.g) sin cargo**: infracción registrable con `monto_multa = 0`. Evaluar con el GAD si requiere derivarse a acción administrativa/penal separada.
 - **Reporte de Recaudación sin filtro por agente/PV**: `tickets` no tiene `agente_id` ni `punto_venta_id` directos; el filtro por agente requeriría join via `sesiones_parqueo`. Pendiente de refinamiento si el GAD lo solicita.
-- **`AgenteParqueoFactory` vacía**: la factory no tiene campos por defecto; los tests de Reportes crean agentes manualmente. Completar la factory si se expande el uso en tests.
+- **`LiquidacionPuntoVenta.monto_bruto` siempre 0**: la tabla `tickets` no tiene `punto_venta_id` directo; `LiquidacionService::calcularPorPuntoVenta` registra 0 hasta implementar ese campo. Ver `LiquidacionService.php`.
+- **Comando `simetsa:verificar-vencimientos-ordenes`**: envuelve `OrdenPagoService::verificarVencimientos()` para marcar órdenes vencidas diariamente. Pendiente de agregar al scheduler en `routes/console.php`.
 
 ---
 
@@ -130,6 +139,16 @@ Inventario de los ~55-60 modelos por módulo: ver `docs/inventario-modelos.md`.
 - Mapas: **OpenStreetMap + Leaflet** (web) / **react-native-maps OSM** (móvil).
 - Almacenamiento: disco local `public`.
 - Comprobantes: nota de venta interna, preparado para facturación electrónica SRI a futuro.
+
+---
+
+## Reglas críticas para la app móvil
+
+- **Usuarios con múltiples roles**: el sistema debe soportar que un usuario tenga `conductor` + `agente_parqueo` simultáneamente. Es el caso de prueba obligatorio antes de cerrar cualquier fase de la app móvil.
+- **Rol activo vs roles disponibles**: la app tiene `activeRole` (modo actual) y `usuario.roles[]` (todos los roles). Nunca asumir que el primer elemento del array es el único rol.
+- **Flujos críticos de aceptación**: "comprar ticket" y "cancelar ticket" deben verificarse en modo conductor. "Validar placa" y "registrar infracción" deben verificarse en modo agente.
+- **No cerrar una fase sin verificar el flujo en app móvil** cuando el cambio involucra endpoints que consume la app.
+- **Permisos por acción en backend**: la autorización real ocurre en el backend (`permission:` middleware); la visibilidad en la app no es suficiente.
 
 ---
 

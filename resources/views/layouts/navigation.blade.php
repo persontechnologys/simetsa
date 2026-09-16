@@ -102,13 +102,13 @@
 				@endcanany
 
 				{{-- Conductores y vehículos --}}
-				@canany(['conductores.ver', 'tipos_vehiculo.ver', 'vehiculos.ver', 'vehiculos_exonerados.ver'])
-				<li class="nav-item nav-item-submenu {{ Route::is(['conductores.*', 'tipos-vehiculo.*', 'vehiculos.*', 'vehiculos-exonerados.*']) ? 'nav-item-expanded nav-item-open' : '' }}">
+				@canany(['conductores.ver', 'tipos_vehiculo.ver', 'vehiculos.ver', 'vehiculos_exonerados.ver', 'credenciales_discapacidad.ver'])
+				<li class="nav-item nav-item-submenu {{ Route::is(['conductores.*', 'tipos-vehiculo.*', 'vehiculos.*', 'vehiculos-exonerados.*', 'credenciales-discapacidad.*']) ? 'nav-item-expanded nav-item-open' : '' }}">
 					<a href="#" class="nav-link">
 						<i class="ph-car"></i>
 						<span>Conductores y vehículos</span>
 					</a>
-					<ul class="nav-group-sub collapse {{ Route::is(['conductores.*', 'tipos-vehiculo.*', 'vehiculos.*', 'vehiculos-exonerados.*']) ? 'show' : '' }}">
+					<ul class="nav-group-sub collapse {{ Route::is(['conductores.*', 'tipos-vehiculo.*', 'vehiculos.*', 'vehiculos-exonerados.*', 'credenciales-discapacidad.*']) ? 'show' : '' }}">
 						@can('conductores.ver')
 							<li class="nav-item"><a href="{{ route('conductores.index') }}" class="nav-link {{ Route::is('conductores.*') ? 'active' : '' }}">Conductores</a></li>
 						@endcan
@@ -120,6 +120,9 @@
 						@endcan
 						@can('vehiculos_exonerados.ver')
 							<li class="nav-item"><a href="{{ route('vehiculos-exonerados.index') }}" class="nav-link {{ Route::is('vehiculos-exonerados.*') ? 'active' : '' }}">Vehículos exonerados</a></li>
+						@endcan
+						@can('credenciales_discapacidad.ver')
+							<li class="nav-item"><a href="{{ route('credenciales-discapacidad.index') }}" class="nav-link {{ Route::is('credenciales-discapacidad.*') ? 'active' : '' }}">Credenciales CONADIS</a></li>
 						@endcan
 					</ul>
 				</li>
@@ -148,8 +151,8 @@
 				@endcanany
 
 				{{-- operaciones --}}
-				@canany(['tickets.ver', 'sesiones_parqueo.ver'])
-				<li class="nav-item nav-item-submenu">
+				@canany(['tickets.ver', 'sesiones_parqueo.ver', 'cancelaciones.ver'])
+				<li class="nav-item nav-item-submenu {{ Route::is(['tickets.*', 'sesiones-parqueo.*', 'cancelaciones.*']) ? 'nav-item-expanded nav-item-open' : '' }}">
 					<a href="#" class="nav-link">
 						<i class="ph-note-blank"></i>
 						<span>Operaciones</span>
@@ -159,10 +162,10 @@
 							<li class="nav-item"><a href="{{ route('tickets.index') }}" class="nav-link {{ Route::is('tickets.*') ? 'active' : '' }}">Tickets</a></li>
 						@endcan
 						@can('sesiones_parqueo.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Sesiones de Parqueo</a></li>
+							<li class="nav-item"><a href="{{ route('sesiones-parqueo.index') }}" class="nav-link {{ Route::is('sesiones-parqueo.*') ? 'active' : '' }}">Sesiones de Parqueo</a></li>
 						@endcan
 						@can('cancelaciones.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Cancelaciones</a></li>
+							<li class="nav-item"><a href="{{ route('cancelaciones.index') }}" class="nav-link {{ Route::is('cancelaciones.*') ? 'active' : '' }}">Cancelaciones</a></li>
 						@endcan
 					</ul>
 				</li>
@@ -171,38 +174,37 @@
 
 
 				{{-- pagos --}}
-				@canany(['pagos.ver', 'liquidaciones.ver'])
-
-				<li class="nav-item nav-item-submenu">
+				@canany(['pagos.ver', 'liquidaciones.ver', 'conciliaciones.ver', 'comprobantes.ver'])
+				<li class="nav-item nav-item-submenu {{ Route::is(['transacciones.*', 'liquidaciones.*', 'comprobantes.*']) ? 'nav-item-expanded nav-item-open' : '' }}">
 					<a href="#" class="nav-link">
 						<i class="ph-coins"></i>
 						<span>Pagos</span>
 					</a>
-					<ul class="nav-group-sub collapse">
+					<ul class="nav-group-sub collapse {{ Route::is(['transacciones.*', 'liquidaciones.*', 'comprobantes.*']) ? 'show' : '' }}">
 						@can('pagos.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Pagos</a></li>
+							<li class="nav-item"><a href="{{ route('transacciones.index') }}" class="nav-link {{ Route::is('transacciones.*') ? 'active' : '' }}">Transacciones</a></li>
 						@endcan
 						@can('liquidaciones.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Liquidaciones</a></li>
+							<li class="nav-item"><a href="{{ route('liquidaciones.index') }}" class="nav-link {{ Route::is('liquidaciones.*') ? 'active' : '' }}">Liquidaciones</a></li>
 						@endcan
 						@can('conciliaciones.ver')
 							<li class="nav-item"><a href="#" class="nav-link">Conciliaciones</a></li>
 						@endcan
 						@can('comprobantes.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Comprobantes</a></li>
+							<li class="nav-item"><a href="{{ route('comprobantes.index') }}" class="nav-link {{ Route::is('comprobantes.*') ? 'active' : '' }}">Comprobantes</a></li>
 						@endcan
 					</ul>
 				</li>
 				@endcanany
 
 				{{-- infracciones --}}
-				@canany(['infracciones.ver', 'multas.ver', 'inmovilizaciones.ver'])
-				<li class="nav-item nav-item-submenu">
+				@canany(['infracciones.ver', 'multas.ver', 'inmovilizaciones.ver', 'ordenes_pago.ver', 'impugnaciones.ver'])
+				<li class="nav-item nav-item-submenu {{ Route::is(['infracciones.*', 'inmovilizaciones.*', 'ordenes-pago.*', 'impugnaciones.*']) ? 'nav-item-expanded nav-item-open' : '' }}">
 					<a href="#" class="nav-link">
 						<i class="ph-warning"></i>
 						<span>Infracciones</span>
 					</a>
-					<ul class="nav-group-sub collapse {{ Route::is(['infracciones.*']) ? 'show' : '' }}">
+					<ul class="nav-group-sub collapse {{ Route::is(['infracciones.*', 'inmovilizaciones.*', 'ordenes-pago.*', 'impugnaciones.*']) ? 'show' : '' }}">
 						@can('infracciones.ver')
 							<li class="nav-item"><a href="{{ route('infracciones.index') }}" class="nav-link {{ Route::is('infracciones.*') ? 'active' : '' }}">Infracciones</a></li>
 						@endcan
@@ -210,13 +212,13 @@
 							<li class="nav-item"><a href="#" class="nav-link">Multas</a></li>
 						@endcan
 						@can('inmovilizaciones.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Inmovilizaciones</a></li>
+							<li class="nav-item"><a href="{{ route('inmovilizaciones.index') }}" class="nav-link {{ Route::is('inmovilizaciones.*') ? 'active' : '' }}">Inmovilizaciones</a></li>
 						@endcan
 						@can('ordenes_pago.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Órdenes de pago</a></li>                                    
+							<li class="nav-item"><a href="{{ route('ordenes-pago.index') }}" class="nav-link {{ Route::is('ordenes-pago.*') ? 'active' : '' }}">Órdenes de pago</a></li>
 						@endcan
 						@can('impugnaciones.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Impugnaciones</a></li>
+							<li class="nav-item"><a href="{{ route('impugnaciones.index') }}" class="nav-link {{ Route::is('impugnaciones.*') ? 'active' : '' }}">Impugnaciones</a></li>
 						@endcan
 					</ul>
 				</li>
@@ -225,14 +227,14 @@
 
 				{{-- Fiscalizacion --}}
 				@canany(['turnos.ver', 'incidentes.ver'])
-				<li class="nav-item nav-item-submenu">
+				<li class="nav-item nav-item-submenu {{ Route::is(['turnos.*']) ? 'nav-item-expanded nav-item-open' : '' }}">
 					<a href="#" class="nav-link">
 						<i class="ph-chart-pie"></i>
 						<span>Fiscalización</span>
 					</a>
-					<ul class="nav-group-sub collapse">
+					<ul class="nav-group-sub collapse {{ Route::is(['turnos.*']) ? 'show' : '' }}">
 						@can('turnos.ver')
-							<li class="nav-item"><a href="#" class="nav-link">Turnos</a></li>
+							<li class="nav-item"><a href="{{ route('turnos.index') }}" class="nav-link {{ Route::is('turnos.*') ? 'active' : '' }}">Turnos</a></li>
 						@endcan
 						@can('recorridos.ver')
 							<li class="nav-item"><a href="#" class="nav-link">Recorridos</a></li>

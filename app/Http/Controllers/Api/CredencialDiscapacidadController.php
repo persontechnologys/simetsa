@@ -7,17 +7,16 @@ use App\Http\Requests\CredencialDiscapacidadStoreRequest;
 use App\Http\Resources\CredencialDiscapacidadResource;
 use App\Models\Conductor;
 use App\Models\CredencialDiscapacidad;
-use App\Models\Vehiculo;
 use App\Services\CredencialDiscapacidadService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Gestión de credenciales CONADIS del conductor desde la app móvil (Art. 26 Ordenanza SIMETSA).
+ * Gestión de credencial CONADIS del conductor desde la app móvil (Art. 26 Ordenanza SIMETSA).
  *
- * El conductor registra su credencial; el comisario o director la aprueba o rechaza
- * desde el backoffice web (CredencialDiscapacidadController).
+ * La credencial es personal (por conductor, no por vehículo). El comisario o director
+ * la aprueba o rechaza desde el backoffice web.
  */
 class CredencialDiscapacidadController extends ApiController
 {
@@ -26,29 +25,48 @@ class CredencialDiscapacidadController extends ApiController
     }
 
     /**
-     * Registra una solicitud de credencial CONADIS para un vehículo del conductor.
+     * Devuelve la credencial más reciente del conductor autenticado.
      *
      * @see Art. 26 Ordenanza SIMETSA.
-     *
-     * @param  \App\Http\Requests\CredencialDiscapacidadStoreRequest  $request
-     * @param  \App\Models\Vehiculo                                   $vehiculo
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(CredencialDiscapacidadStoreRequest $request, Vehiculo $vehiculo): JsonResponse
+    public function show(Request $request): JsonResponse
+    {
+        if (! $request->user()->can('credenciales_discapacidad.ver')) {
+            return $this->error('No autorizado.', null, 403);
+        }
+
+        $conductor = Conductor::where('user_id', $request->user()->id)->first();
+
+        if (! $conductor) {
+            return $this->error('Perfil de conductor no encontrado.', null, 404);
+        }
+
+        $credencial = $conductor->credencial;
+
+        if (! $credencial) {
+            return $this->error('No tenés una credencial CONADIS registrada.', null, 404);
+        }
+
+        return $this->exito(new CredencialDiscapacidadResource($credencial), 'Credencial del conductor.');
+    }
+
+    /**
+     * Registra una solicitud de credencial CONADIS para el conductor autenticado.
+     *
+     * @see Art. 26 Ordenanza SIMETSA.
+     */
+    public function store(CredencialDiscapacidadStoreRequest $request): JsonResponse
     {
         $this->authorize('create', CredencialDiscapacidad::class);
 
-        // Conductores solo pueden registrar credenciales de sus propios vehículos.
-        if ($request->user()->hasRole('conductor')) {
-            $conductor = Conductor::where('user_id', $request->user()->id)->first();
+        $conductor = Conductor::where('user_id', $request->user()->id)->first();
 
-            if (! $conductor || $vehiculo->conductor_id !== $conductor->id) {
-                return $this->error('No tienes acceso a este vehículo.', null, 403);
-            }
+        if (! $conductor) {
+            return $this->error('Perfil de conductor no encontrado.', null, 404);
         }
 
         try {
-            $credencial = $this->servicio->solicitar($vehiculo, $request->validated());
+            $credencial = $this->servicio->solicitar($conductor, $request->validated());
         } catch (DomainException $e) {
             return $this->error($e->getMessage(), null, 422);
         }
@@ -58,38 +76,5 @@ class CredencialDiscapacidadController extends ApiController
             'Credencial enviada para revisión.',
             201,
         );
-    }
-
-    /**
-     * Devuelve la credencial más reciente del vehículo.
-     *
-     * @see Art. 26 Ordenanza SIMETSA.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Vehiculo      $vehiculo
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function show(Request $request, Vehiculo $vehiculo): JsonResponse
-    {
-        if (! $request->user()->can('credenciales_discapacidad.ver')) {
-            return $this->error('No autorizado.', null, 403);
-        }
-
-        // Conductores solo pueden ver credenciales de sus propios vehículos.
-        if ($request->user()->hasRole('conductor')) {
-            $conductor = Conductor::where('user_id', $request->user()->id)->first();
-
-            if (! $conductor || $vehiculo->conductor_id !== $conductor->id) {
-                return $this->error('No tienes acceso a este vehículo.', null, 403);
-            }
-        }
-
-        $credencial = $vehiculo->credencial;
-
-        if (! $credencial) {
-            return $this->error('Este vehículo no tiene credencial CONADIS registrada.', null, 404);
-        }
-
-        return $this->exito(new CredencialDiscapacidadResource($credencial), 'Credencial del vehículo.');
     }
 }

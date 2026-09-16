@@ -10,8 +10,10 @@ use App\Enums\TipoInfraccion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -149,6 +151,39 @@ class Infraccion extends Model implements Cobrable
     public function transacciones(): MorphMany
     {
         return $this->morphMany(TransaccionPago::class, 'concepto');
+    }
+
+    /** Comprobante de pago generado al acreditar la multa (Art. 19). */
+    public function comprobante(): MorphOne
+    {
+        return $this->morphOne(Comprobante::class, 'concepto');
+    }
+
+    /** Órdenes de pago formales emitidas para esta infracción (Art. 28). */
+    public function ordenesPago(): HasMany
+    {
+        return $this->hasMany(OrdenPago::class);
+    }
+
+    /**
+     * Impugnación presentada por el conductor (Art. 17.f).
+     * Una infracción solo puede tener una impugnación por conductor.
+     *
+     * @return HasOne<Impugnacion>
+     */
+    public function impugnacion(): HasOne
+    {
+        return $this->hasOne(Impugnacion::class);
+    }
+
+    /**
+     * Boletas digitales generadas al registrar la infracción.
+     *
+     * @return HasMany<NotificacionInfraccion>
+     */
+    public function notificaciones(): HasMany
+    {
+        return $this->hasMany(NotificacionInfraccion::class);
     }
 
     // ── Cobrable ─────────────────────────────────────────────────────────────

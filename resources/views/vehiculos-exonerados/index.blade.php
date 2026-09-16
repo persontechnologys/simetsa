@@ -52,6 +52,17 @@
                                    class="btn btn-sm btn-outline-primary" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                <form method="POST" action="{{ route('vehiculos-exonerados.toggle', $v) }}" class="d-inline">
+                                    @csrf @method('PATCH')
+                                    <button type="submit"
+                                            class="btn btn-sm {{ $v->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"
+                                            title="{{ $v->activo ? 'Suspender' : 'Activar' }}"
+                                            data-confirm
+                                            data-action="{{ $v->activo ? 'suspender' : 'activar' }}"
+                                            data-msg="{{ $v->activo ? '¿Suspender la exoneración de la placa '.$v->placa.'?' : '¿Activar la exoneración de la placa '.$v->placa.'?' }}">
+                                        <i class="bi bi-{{ $v->activo ? 'pause-circle' : 'play-circle' }}"></i>
+                                    </button>
+                                </form>
                             @endcan
                             @can('vehiculos_exonerados.eliminar')
                                 <form method="POST" action="{{ route('vehiculos-exonerados.destroy', $v) }}" class="d-inline">

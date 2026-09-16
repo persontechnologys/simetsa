@@ -304,6 +304,12 @@ Breadcrumbs::for('conductores.show', function (BreadcrumbTrail $trail, $conducto
     $trail->push($conductor->user?->name ?? $conductor->codigo, route('conductores.show', $conductor));
 });
 
+// ===== Fase 4.C — Credenciales CONADIS backoffice =====
+Breadcrumbs::for('credenciales-discapacidad.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Credenciales CONADIS', route('credenciales-discapacidad.index'));
+});
+
 // ===== Fase 4.D — Vehículos exonerados =====
 Breadcrumbs::for('vehiculos-exonerados.index', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
@@ -336,6 +342,76 @@ Breadcrumbs::for('infracciones.index', function (BreadcrumbTrail $trail) {
 Breadcrumbs::for('infracciones.show', function (BreadcrumbTrail $trail, $infraccion) {
     $trail->parent('infracciones.index');
     $trail->push("Infracción #{$infraccion->id}", route('infracciones.show', $infraccion));
+});
+
+// ===== Fase 9.5.3 — Cancelaciones =====
+Breadcrumbs::for('cancelaciones.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Cancelaciones', route('cancelaciones.index'));
+});
+Breadcrumbs::for('cancelaciones.show', function (BreadcrumbTrail $trail, $cancelacion) {
+    $trail->parent('cancelaciones.index');
+    $trail->push("Cancelación #{$cancelacion->id}", route('cancelaciones.show', $cancelacion));
+});
+
+// ===== Fase 9.5.3 — Sesiones de Parqueo =====
+Breadcrumbs::for('sesiones-parqueo.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Sesiones de Parqueo', route('sesiones-parqueo.index'));
+});
+
+// ===== Fase 9.5.3 — Inmovilizaciones =====
+Breadcrumbs::for('inmovilizaciones.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Inmovilizaciones', route('inmovilizaciones.index'));
+});
+Breadcrumbs::for('inmovilizaciones.show', function (BreadcrumbTrail $trail, $inmovilizacion) {
+    $trail->parent('inmovilizaciones.index');
+    $trail->push("Inmovilización #{$inmovilizacion->id}", route('inmovilizaciones.show', $inmovilizacion));
+});
+
+// ===== Fase 9.5.3 — Transacciones de Pago =====
+Breadcrumbs::for('transacciones.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Transacciones de Pago', route('transacciones.index'));
+});
+
+// ===== Fase 9.5.4 — Fiscalización: Turnos =====
+Breadcrumbs::for('turnos.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Turnos de Agentes', route('turnos.index'));
+});
+Breadcrumbs::for('turnos.show', function (BreadcrumbTrail $trail, $turno) {
+    $trail->parent('turnos.index');
+    $trail->push('Turno #' . $turno->id, route('turnos.show', $turno));
+});
+
+// ===== Fase 9.5.5 — Órdenes de Pago, Comprobantes, Liquidaciones =====
+Breadcrumbs::for('ordenes-pago.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Órdenes de Pago', route('ordenes-pago.index'));
+});
+Breadcrumbs::for('ordenes-pago.show', function (BreadcrumbTrail $trail, $ordenPago) {
+    $trail->parent('ordenes-pago.index');
+    $trail->push($ordenPago->numero_orden, route('ordenes-pago.show', $ordenPago));
+});
+Breadcrumbs::for('comprobantes.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Comprobantes', route('comprobantes.index'));
+});
+Breadcrumbs::for('liquidaciones.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Liquidaciones', route('liquidaciones.index'));
+});
+
+// ===== Impugnaciones (Fase 9.5.6) =====
+Breadcrumbs::for('impugnaciones.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Impugnaciones', route('impugnaciones.index'));
+});
+Breadcrumbs::for('impugnaciones.show', function (BreadcrumbTrail $trail, $impugnacion) {
+    $trail->parent('impugnaciones.index');
+    $trail->push("Impugnación #{$impugnacion->id}", route('impugnaciones.show', $impugnacion->id));
 });
 
 // ===== Reportes (Fase 8) =====

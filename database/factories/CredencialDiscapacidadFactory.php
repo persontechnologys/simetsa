@@ -4,8 +4,8 @@
 namespace Database\Factories;
 
 use App\Models\CredencialDiscapacidad;
+use App\Models\Conductor;
 use App\Models\User;
-use App\Models\Vehiculo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +19,7 @@ class CredencialDiscapacidadFactory extends Factory
     public function definition(): array
     {
         return [
-            'vehiculo_id'             => Vehiculo::factory(),
+            'conductor_id'            => Conductor::factory(),
             'numero_conadis'          => strtoupper(fake()->bothify('##-????-CONADIS')),
             'nombre_beneficiario'     => fake()->name(),
             'porcentaje_discapacidad' => fake()->numberBetween(30, 100),

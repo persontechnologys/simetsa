@@ -4,6 +4,7 @@
 
 namespace App\Policies;
 
+use App\Models\Conductor;
 use App\Models\Infraccion;
 use App\Models\User;
 
@@ -52,8 +53,14 @@ class InfraccionPolicy
         }
 
         if ($user->hasRole('conductor')) {
-            return $infraccion->conductor_id !== null
-                && $infraccion->conductor->user_id === $user->id;
+            $conductor = Conductor::where('user_id', $user->id)->first();
+            if (! $conductor) return false;
+
+            // Vinculada directamente al conductor
+            if ($infraccion->conductor_id === $conductor->id) return true;
+
+            // Registrada por placa (mismo criterio que historialConductor)
+            return $conductor->vehiculos()->where('placa', $infraccion->placa)->exists();
         }
 
         return true;

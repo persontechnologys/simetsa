@@ -19,7 +19,7 @@ class CredencialDiscapacidadResource extends JsonResource
     {
         return [
             'id'                      => $this->id,
-            'vehiculo_id'             => $this->vehiculo_id,
+            'conductor_id'            => $this->conductor_id,
             'numero_conadis'          => $this->numero_conadis,
             'nombre_beneficiario'     => $this->nombre_beneficiario,
             'porcentaje_discapacidad' => $this->porcentaje_discapacidad,

@@ -5,14 +5,16 @@
     {{ Breadcrumbs::render('solicitudes-agente.index') }}
 @endsection
 
-@section('encabezado')
-    <div class="d-flex justify-content-between align-items-center">
-        <h1 class="h3 mb-0"><i class="bi bi-person-badge text-simetsa me-1"></i> Solicitudes de Agente</h1>
+
+@section('breadcrumb_elements')
+    <div class="d-lg-flex mb-2 mb-lg-0">
         @can('agentes.crear')
-            <a href="{{ route('solicitudes-agente.create') }}" class="btn btn-simetsa">
-                <i class="bi bi-plus-circle me-1"></i> Nueva solicitud
-            </a>
+            <a href="{{ route('solicitudes-agente.create') }}" class="d-flex align-items-center text-body py-2">
+                <i class="ph-lifebuoy me-2"></i>
+                Nueva solicitud
+            </a>    
         @endcan
+        
     </div>
 @endsection
 

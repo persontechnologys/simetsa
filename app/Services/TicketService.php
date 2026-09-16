@@ -109,12 +109,15 @@ class TicketService
         $proveedorValor = $datos['proveedor'] ?? ProveedorPago::None->value;
         $proveedor      = ProveedorPago::from($proveedorValor);
         $esPagoDigital  = $proveedor->esDigital();
+        $esEfectivoOtp  = $proveedor === ProveedorPago::Efectivo;
 
-        return DB::transaction(function () use ($datos, $conductor, $zona, $ahora, $calculo, $proveedor, $esPagoDigital) {
+        return DB::transaction(function () use ($datos, $conductor, $zona, $ahora, $calculo, $proveedor, $esPagoDigital, $esEfectivoOtp) {
             $expira_en = $ahora->copy()->addHours((int) $datos['horas_compradas']);
 
-            // Si el pago es digital, el ticket nace en PendientePago hasta confirmar el cobro.
-            $estadoInicial = $esPagoDigital ? EstadoTicket::PendientePago : EstadoTicket::Pendiente;
+            // PendientePago: gateway digital o efectivo con OTP — requieren confirmación externa.
+            $estadoInicial = ($esPagoDigital || $esEfectivoOtp)
+                ? EstadoTicket::PendientePago
+                : EstadoTicket::Pendiente;
 
             $ticket = Ticket::create([
                 'codigo'           => Ticket::generarCodigo(),
@@ -392,39 +395,9 @@ class TicketService
                 'El tiempo máximo de parqueo es 2 horas (Art. 14). Puede comprar 1 o 2 horas.'
             );
         }
-
-        // Verificar que el ticket no cruce el cierre de jornada (D4)
-        $horario = $this->horarioDelDia($ahora);
-
-        if (! $horario) {
-            return; // Sin horario configurado, la validación de cruce no aplica
-        }
-
-        [$horaH, $horaM, $horaS] = array_map('intval', explode(':', $horario->hora_fin));
-        $cierreHoy = $ahora->copy()->setTime($horaH, $horaM, $horaS);
-
-        $expiraria = $ahora->copy()->addHours($horas);
-
-        if ($expiraria->gt($cierreHoy)) {
-            $minutosDisponibles = max(0, (int) $ahora->diffInMinutes($cierreHoy, absolute: true));
-            $horasMaximas       = (int) floor($minutosDisponibles / 60);
-            $venceriaA          = $expiraria->format('H:i');
-            $cierreStr          = $cierreHoy->format('H:i');
-
-            if ($horasMaximas === 0) {
-                throw new DomainException(
-                    "No hay tiempo suficiente para comprar 1 hora: su ticket vencería a las {$venceriaA}, " .
-                    "después del cierre de operaciones ({$cierreStr}) (Art. 12)."
-                );
-            }
-
-            $texto = $horasMaximas === 1 ? '1 hora' : "{$horasMaximas} horas";
-            throw new DomainException(
-                "Con {$horas} hora(s), su ticket vencería a las {$venceriaA}, " .
-                "después del cierre de operaciones ({$cierreStr}). " .
-                "Máximo puede comprar: {$texto} (Art. 12)."
-            );
-        }
+        // La compra es válida si se realiza dentro del horario operativo,
+        // aunque el ticket venza después del cierre. La fiscalización
+        // se detiene a la hora de cierre (Art. 12).
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -451,8 +424,8 @@ class TicketService
             return 'institucional';
         }
 
-        // Art. 26: credencial CONADIS aprobada y vigente
-        $credencialActiva = CredencialDiscapacidad::where('vehiculo_id', $vehiculo->id)
+        // Art. 26: credencial CONADIS aprobada y vigente (personal del conductor, aplica a todos sus vehículos)
+        $credencialActiva = $vehiculo->conductor_id && CredencialDiscapacidad::where('conductor_id', $vehiculo->conductor_id)
             ->where('estado', CredencialDiscapacidad::ESTADO_APROBADA)
             ->where(fn ($q) => $q
                 ->whereNull('fecha_vencimiento')

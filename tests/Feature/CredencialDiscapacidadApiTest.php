@@ -18,6 +18,9 @@ use Tests\TestCase;
 
 /**
  * Tests de credenciales CONADIS (Fase 4.C — Art. 26 Ordenanza SIMETSA).
+ *
+ * La credencial es personal del conductor (no del vehículo) desde la migración
+ * 2026_06_10 — todos los endpoints usan /conductor/credencial.
  */
 class CredencialDiscapacidadApiTest extends TestCase
 {
@@ -78,25 +81,22 @@ class CredencialDiscapacidadApiTest extends TestCase
 
     public function test_registrar_credencial_requiere_autenticacion(): void
     {
-        $vehiculo = $this->crearVehiculo();
-
-        $this->postJson("/api/v1/vehiculos/{$vehiculo->id}/credencial", [])->assertUnauthorized();
+        $this->postJson('/api/v1/conductor/credencial', [])->assertUnauthorized();
     }
 
     // ===== API — Registro =====
 
     public function test_conductor_puede_registrar_credencial_sin_archivo(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $this->crearConductor();
 
         $response = $this->withToken($this->token($this->conductorUser()))
-            ->postJson("/api/v1/vehiculos/{$vehiculo->id}/credencial", $this->datosCredencial())
+            ->postJson('/api/v1/conductor/credencial', $this->datosCredencial())
             ->assertCreated();
 
         $this->assertTrue($response->json('exito'));
         $this->assertEquals('pendiente', $response->json('datos.estado'));
         $this->assertDatabaseHas('credenciales_discapacidad', [
-            'vehiculo_id'    => $vehiculo->id,
             'numero_conadis' => '17-AB12-CONADIS',
         ]);
     }
@@ -104,10 +104,10 @@ class CredencialDiscapacidadApiTest extends TestCase
     public function test_conductor_puede_registrar_credencial_con_archivo(): void
     {
         Storage::fake('public');
-        $vehiculo = $this->crearVehiculo();
+        $this->crearConductor();
 
         $response = $this->withToken($this->token($this->conductorUser()))
-            ->post("/api/v1/vehiculos/{$vehiculo->id}/credencial", array_merge(
+            ->post('/api/v1/conductor/credencial', array_merge(
                 $this->datosCredencial(),
                 ['archivo' => UploadedFile::fake()->create('credencial.pdf', 200, 'application/pdf')],
             ), ['Accept' => 'application/json']);
@@ -116,81 +116,56 @@ class CredencialDiscapacidadApiTest extends TestCase
         $this->assertNotNull($response->json('datos.url_archivo'));
     }
 
-    public function test_segunda_credencial_activa_del_mismo_vehiculo_falla(): void
+    public function test_segunda_credencial_activa_del_mismo_conductor_falla(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
 
         CredencialDiscapacidad::factory()->create([
-            'vehiculo_id' => $vehiculo->id,
-            'estado'      => CredencialDiscapacidad::ESTADO_PENDIENTE,
+            'conductor_id' => $conductor->id,
+            'estado'       => CredencialDiscapacidad::ESTADO_PENDIENTE,
         ]);
 
         $this->withToken($this->token($this->conductorUser()))
-            ->postJson("/api/v1/vehiculos/{$vehiculo->id}/credencial", $this->datosCredencial())
+            ->postJson('/api/v1/conductor/credencial', $this->datosCredencial())
             ->assertUnprocessable()
             ->assertJsonPath('exito', false);
     }
 
     public function test_puede_registrar_nueva_credencial_si_anterior_fue_rechazada(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
 
-        CredencialDiscapacidad::factory()->rechazada()->create(['vehiculo_id' => $vehiculo->id]);
+        CredencialDiscapacidad::factory()->rechazada()->create(['conductor_id' => $conductor->id]);
 
         $this->withToken($this->token($this->conductorUser()))
-            ->postJson("/api/v1/vehiculos/{$vehiculo->id}/credencial", $this->datosCredencial())
+            ->postJson('/api/v1/conductor/credencial', $this->datosCredencial())
             ->assertCreated();
-    }
-
-    public function test_conductor_no_puede_registrar_credencial_en_vehiculo_ajeno(): void
-    {
-        $this->crearConductor(); // ensure conductor record for conductorUser()
-
-        $otroConductor = Conductor::factory()->create();
-        $vehiculoAjeno = $this->crearVehiculo($otroConductor);
-
-        $this->withToken($this->token($this->conductorUser()))
-            ->postJson("/api/v1/vehiculos/{$vehiculoAjeno->id}/credencial", $this->datosCredencial())
-            ->assertForbidden();
     }
 
     // ===== API — Consulta =====
 
-    public function test_conductor_puede_ver_credencial_de_su_vehiculo(): void
+    public function test_conductor_puede_ver_su_credencial(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
 
         CredencialDiscapacidad::factory()->create([
-            'vehiculo_id'    => $vehiculo->id,
+            'conductor_id'   => $conductor->id,
             'numero_conadis' => '17-TESTCONADIS',
         ]);
 
         $response = $this->withToken($this->token($this->conductorUser()))
-            ->getJson("/api/v1/vehiculos/{$vehiculo->id}/credencial")
+            ->getJson('/api/v1/conductor/credencial')
             ->assertOk();
 
         $this->assertEquals('17-TESTCONADIS', $response->json('datos.numero_conadis'));
     }
 
-    public function test_conductor_no_puede_ver_credencial_de_vehiculo_ajeno(): void
+    public function test_conductor_sin_credencial_retorna_404(): void
     {
         $this->crearConductor();
 
-        $otroConductor = Conductor::factory()->create();
-        $vehiculoAjeno = $this->crearVehiculo($otroConductor);
-        CredencialDiscapacidad::factory()->create(['vehiculo_id' => $vehiculoAjeno->id]);
-
         $this->withToken($this->token($this->conductorUser()))
-            ->getJson("/api/v1/vehiculos/{$vehiculoAjeno->id}/credencial")
-            ->assertForbidden();
-    }
-
-    public function test_vehiculo_sin_credencial_retorna_404(): void
-    {
-        $vehiculo = $this->crearVehiculo();
-
-        $this->withToken($this->token($this->conductorUser()))
-            ->getJson("/api/v1/vehiculos/{$vehiculo->id}/credencial")
+            ->getJson('/api/v1/conductor/credencial')
             ->assertNotFound();
     }
 
@@ -198,10 +173,10 @@ class CredencialDiscapacidadApiTest extends TestCase
 
     public function test_comisario_puede_aprobar_credencial_pendiente(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
         $credencial = CredencialDiscapacidad::factory()->create([
-            'vehiculo_id' => $vehiculo->id,
-            'estado'      => CredencialDiscapacidad::ESTADO_PENDIENTE,
+            'conductor_id' => $conductor->id,
+            'estado'       => CredencialDiscapacidad::ESTADO_PENDIENTE,
         ]);
 
         $this->actingAs($this->comisarioUser())
@@ -214,10 +189,10 @@ class CredencialDiscapacidadApiTest extends TestCase
 
     public function test_comisario_puede_rechazar_credencial_pendiente(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
         $credencial = CredencialDiscapacidad::factory()->create([
-            'vehiculo_id' => $vehiculo->id,
-            'estado'      => CredencialDiscapacidad::ESTADO_PENDIENTE,
+            'conductor_id' => $conductor->id,
+            'estado'       => CredencialDiscapacidad::ESTADO_PENDIENTE,
         ]);
 
         $this->actingAs($this->comisarioUser())
@@ -231,10 +206,10 @@ class CredencialDiscapacidadApiTest extends TestCase
 
     public function test_rechazar_sin_observaciones_redirige_con_error(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
         $credencial = CredencialDiscapacidad::factory()->create([
-            'vehiculo_id' => $vehiculo->id,
-            'estado'      => CredencialDiscapacidad::ESTADO_PENDIENTE,
+            'conductor_id' => $conductor->id,
+            'estado'       => CredencialDiscapacidad::ESTADO_PENDIENTE,
         ]);
 
         $this->actingAs($this->comisarioUser())
@@ -249,9 +224,9 @@ class CredencialDiscapacidadApiTest extends TestCase
 
     public function test_conductor_no_puede_aprobar_credencial(): void
     {
-        $vehiculo = $this->crearVehiculo();
+        $conductor = $this->crearConductor();
         $credencial = CredencialDiscapacidad::factory()->create([
-            'vehiculo_id' => $vehiculo->id,
+            'conductor_id' => $conductor->id,
         ]);
 
         $this->actingAs($this->conductorUser())

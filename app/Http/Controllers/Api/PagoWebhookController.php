@@ -5,10 +5,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\EstadoTransaccion;
+use App\Services\ComprobanteService;
 use App\Services\Pagos\PagoManager;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Endpoint receptor de callbacks/webhooks de los proveedores de pago (Art. 21).
@@ -24,8 +26,10 @@ use Illuminate\Http\Request;
  */
 class PagoWebhookController extends ApiController
 {
-    public function __construct(private readonly PagoManager $pagoManager)
-    {
+    public function __construct(
+        private readonly PagoManager $pagoManager,
+        private readonly ComprobanteService $comprobanteService,
+    ) {
     }
 
     /**
@@ -48,6 +52,17 @@ class PagoWebhookController extends ApiController
         // Si el pago se completó, acreditar al concepto cobrado (Ticket, etc.)
         if ($transaccion->estado === EstadoTransaccion::Completada) {
             $transaccion->concepto->acreditar($transaccion);
+
+            // Generar comprobante de pago automáticamente (Art. 19).
+            try {
+                $this->comprobanteService->generar($transaccion->concepto, $transaccion);
+            } catch (\Throwable $e) {
+                // No interrumpir el webhook si el comprobante falla.
+                Log::error('Webhook: error al generar comprobante', [
+                    'transaccion_id' => $transaccion->id,
+                    'error'          => $e->getMessage(),
+                ]);
+            }
         }
 
         return $this->exito(['recibido' => true], 'Webhook procesado.');

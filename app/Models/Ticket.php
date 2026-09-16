@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -107,6 +108,12 @@ class Ticket extends Model implements Cobrable
     public function transacciones(): MorphMany
     {
         return $this->morphMany(TransaccionPago::class, 'concepto');
+    }
+
+    /** Comprobante de pago generado al acreditar el ticket (Art. 19). */
+    public function comprobante(): MorphOne
+    {
+        return $this->morphOne(Comprobante::class, 'concepto');
     }
 
     // ────────────────────────────────────────────────────────────────────────

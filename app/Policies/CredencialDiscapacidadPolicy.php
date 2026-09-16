@@ -36,7 +36,7 @@ class CredencialDiscapacidadPolicy
     }
 
     /**
-     * El conductor solo puede ver las credenciales de sus propios vehículos.
+     * El conductor solo puede ver su propia credencial.
      */
     public function view(User $user, CredencialDiscapacidad $credencial): bool
     {
@@ -47,7 +47,7 @@ class CredencialDiscapacidadPolicy
         if ($user->hasRole('conductor')) {
             $conductor = Conductor::where('user_id', $user->id)->first();
 
-            return $conductor && $credencial->vehiculo->conductor_id === $conductor->id;
+            return $conductor && $credencial->conductor_id === $conductor->id;
         }
 
         return true;

@@ -54,6 +54,14 @@ class TicketResource extends JsonResource
             'sesion' => $this->whenLoaded('sesion', fn () => $this->sesion
                 ? new SesionParqueoResource($this->sesion)
                 : null),
+            'comprobante_id' => $this->whenLoaded(
+                'comprobante',
+                fn () => $this->comprobante?->id,
+            ),
+            'payment_url' => $this->whenLoaded(
+                'transacciones',
+                fn () => $this->transacciones->last()?->payment_url,
+            ),
         ];
     }
 }

@@ -21,7 +21,7 @@ class VehiculoExoneradoController extends Controller
     {
         $this->middleware('permission:vehiculos_exonerados.ver')->only('index');
         $this->middleware('permission:vehiculos_exonerados.crear')->only(['create', 'store']);
-        $this->middleware('permission:vehiculos_exonerados.editar')->only(['edit', 'update']);
+        $this->middleware('permission:vehiculos_exonerados.editar')->only(['edit', 'update', 'toggle']);
         $this->middleware('permission:vehiculos_exonerados.eliminar')->only('destroy');
     }
 
@@ -103,6 +103,23 @@ class VehiculoExoneradoController extends Controller
 
         return redirect()->route('vehiculos-exonerados.index')
             ->with('success', 'Vehículo exonerado actualizado correctamente.');
+    }
+
+    /**
+     * Activa o suspende temporalmente una exoneración sin eliminarla (Art. 27).
+     *
+     * Permite al comisario suspender una exoneración de forma reversible cuando
+     * el vehículo deje de cumplir los requisitos temporalmente.
+     *
+     * @param  \App\Models\VehiculoExonerado  $vehiculo_exonerado
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function toggle(VehiculoExonerado $vehiculo_exonerado): RedirectResponse
+    {
+        $vehiculo_exonerado->update(['activo' => ! $vehiculo_exonerado->activo]);
+        $estado = $vehiculo_exonerado->activo ? 'activada' : 'suspendida';
+
+        return back()->with('success', "Exoneración de la placa {$vehiculo_exonerado->placa} {$estado}.");
     }
 
     /**

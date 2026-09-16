@@ -16,7 +16,9 @@ use Spatie\Permission\Models\Role;
  * Controlador del CRUD de roles y asignación de permisos.
  *
  * Reglas:
- *  - Autorización vía RolPolicy aplicada por authorizeResource.
+ *  - Autorización vía permisos Spatie en constructor para acciones CRUD básicas.
+ *  - Acciones destructivas (edit, update, destroy) invocan RolPolicy inline
+ *    para proteger al rol super_admin y roles del sistema.
  *  - Los 6 roles del Enum RolSistema no se pueden renombrar ni eliminar;
  *    sí editan sus permisos (excepto super_admin).
  *  - Eliminación bloqueada si el rol tiene usuarios asignados.
@@ -28,7 +30,10 @@ class RolController extends Controller
      */
     public function __construct(private RolService $rolService)
     {
-        $this->authorizeResource(Role::class, 'rol');
+        $this->middleware('permission:roles.ver',      ['only' => ['index', 'show']]);
+        $this->middleware('permission:roles.crear',    ['only' => ['create', 'store']]);
+        $this->middleware('permission:roles.editar',   ['only' => ['edit', 'update']]);
+        $this->middleware('permission:roles.eliminar', ['only' => ['destroy']]);
     }
 
     /**
@@ -103,6 +108,9 @@ class RolController extends Controller
      */
     public function edit(Role $rol): View
     {
+        // RolPolicy::update() bloquea edición del rol super_admin para todos los roles.
+        $this->authorize('update', $rol);
+
         $rol->load('permissions');
 
         $esRolDelSistema  = $this->esRolDelSistema($rol->name);
@@ -128,6 +136,9 @@ class RolController extends Controller
      */
     public function update(RolUpdateRequest $request, Role $rol): RedirectResponse
     {
+        // RolPolicy::update() bloquea actualización del rol super_admin.
+        $this->authorize('update', $rol);
+
         $datos = $request->validated();
 
         // Si es rol del sistema, preserva el nombre original
@@ -158,12 +169,14 @@ class RolController extends Controller
      */
     public function destroy(Role $rol): RedirectResponse
     {
-        // Defensa 1: nunca eliminar roles del sistema
+        // RolPolicy::delete() bloquea roles del sistema, super_admin y roles con usuarios.
+        $this->authorize('delete', $rol);
+
+        // Defense-in-depth: garantías adicionales independientes de la policy.
         if ($this->esRolDelSistema($rol->name)) {
             abort(403, 'Los roles del sistema no pueden eliminarse desde la interfaz.');
         }
 
-        // Defensa 2: nunca eliminar un rol con usuarios asignados
         if ($rol->users()->count() > 0) {
             return redirect()
                 ->route('roles.index')

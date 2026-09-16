@@ -3,64 +3,62 @@
 
 namespace App\Services;
 
+use App\Models\Conductor;
 use App\Models\CredencialDiscapacidad;
 use App\Models\User;
-use App\Models\Vehiculo;
 use DomainException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-
 /**
  * Lógica de gestión de credenciales CONADIS (Art. 26 Ordenanza SIMETSA).
  *
- * Un vehículo solo puede tener una credencial activa (pendiente o aprobada)
- * a la vez. El conductor solicita; el comisario o director aprueba o rechaza.
+ * Cada conductor tiene una sola credencial activa (pendiente o aprobada) a la vez.
+ * El conductor solicita; el comisario o director aprueba o rechaza.
  */
 class CredencialDiscapacidadService
 {
     /**
-     * Registra una solicitud de credencial CONADIS para un vehículo.
+     * Registra una solicitud de credencial CONADIS para un conductor.
      *
      * @see Art. 26 Ordenanza SIMETSA.
      *
-     * @param  Vehiculo  $vehiculo
-     * @param  array{numero_conadis:string, nombre_beneficiario:string, fecha_emision:string, fecha_vencimiento:?string, porcentaje_discapacidad:?int, archivo:?UploadedFile, observaciones:?string}  $datos
+     * @param  Conductor  $conductor
+     * @param  array{numero_conadis:string, nombre_beneficiario:string, fecha_emision:string, fecha_vencimiento:?string, porcentaje_discapacidad:?int, archivo:?\Illuminate\Http\UploadedFile, observaciones:?string}  $datos
      * @return CredencialDiscapacidad
      *
-     * @throws DomainException Si el vehículo ya tiene una credencial activa.
+     * @throws DomainException Si el conductor ya tiene una credencial activa.
      */
-    public function solicitar(Vehiculo $vehiculo, array $datos): CredencialDiscapacidad
+    public function solicitar(Conductor $conductor, array $datos): CredencialDiscapacidad
     {
-        $activa = CredencialDiscapacidad::where('vehiculo_id', $vehiculo->id)
+        $activa = CredencialDiscapacidad::where('conductor_id', $conductor->id)
             ->whereIn('estado', [CredencialDiscapacidad::ESTADO_PENDIENTE, CredencialDiscapacidad::ESTADO_APROBADA])
             ->exists();
 
         if ($activa) {
-            throw new DomainException('Este vehículo ya tiene una credencial CONADIS activa. (Art. 26)');
+            throw new DomainException('Ya tenés una credencial CONADIS activa. (Art. 26)');
         }
 
-        return DB::transaction(function () use ($vehiculo, $datos) {
+        return DB::transaction(function () use ($conductor, $datos) {
             if (isset($datos['archivo']) && $datos['archivo'] instanceof UploadedFile) {
                 try {
                     $ruta = $datos['archivo']->store(
-                        "credenciales/{$vehiculo->conductor_id}/{$vehiculo->id}",
+                        "credenciales/{$conductor->id}",
                         'public',
                     );
                     $datos['ruta_archivo'] = $ruta;
                 } catch (\Throwable $e) {
                     Log::error('Error al guardar archivo de credencial CONADIS', [
-                        'vehiculo_id' => $vehiculo->id,
-                        'error'       => $e->getMessage(),
+                        'conductor_id' => $conductor->id,
+                        'error'        => $e->getMessage(),
                     ]);
                 }
                 unset($datos['archivo']);
             }
 
             return CredencialDiscapacidad::create(array_merge($datos, [
-                'vehiculo_id' => $vehiculo->id,
-                'estado'      => CredencialDiscapacidad::ESTADO_PENDIENTE,
+                'conductor_id' => $conductor->id,
+                'estado'       => CredencialDiscapacidad::ESTADO_PENDIENTE,
             ]));
         });
     }

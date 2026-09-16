@@ -132,7 +132,67 @@ Stack: **Expo SDK 56** (JS puro, sin TypeScript) + `react-native-maps` (OSM) + `
 - Token almacenado en `expo-secure-store`; header Bearer aplicado globalmente en axios.
 - FCM best-effort: el login no depende de push.
 
+## Fase 9.5 — Auditoría funcional y cierre de módulos críticos pre-Fase 10 ✅
+
+> **Fase 9 ≠ listo para producción.** Esta fase es el cierre funcional pre-testing interno.  
+> **Fase 10 DESBLOQUEADA** — 9.5.5 completada 2026-06-06.  
+> Cada sub-fase se trabaja en un **chat separado**. Ver `docs/plan-fases-post-9.md` para prompts y detalle completo.  
+> Auditoría base: `docs/auditoria-fase-9-5-pre-fase10.md` · Brechas: `docs/backlog-cierre-modulos-criticos.md`
+
+**9.5.1 ✅ Auditoría y documentación** — Matriz de brechas, plan técnico, auditoría app multirol.
+
+**9.5.2 ✅ Fix multi-rol app móvil** — Implementado 2026-06-06.
+- `src/constants/config.js` → agrega `ACTIVE_ROLE: 'simetsa_active_role'`
+- `src/context/AuthContext.js` → `activeRole` (estado), `setActiveRole(rol)` (persiste SecureStore), restauración en `cargarSesion()`, limpieza en `cerrarSesion()`
+- `app/index.js` → lógica: multi-rol sin `activeRole` → `/selector-rol`; rol único o `activeRole` definido → layout directo
+- `app/selector-rol.js` → nueva pantalla con tarjeta por rol disponible
+- `app/(conductor)/_layout.js` + `app/(agente)/_layout.js` → guards de `activeRole`
+- `app/(conductor)/(tabs)/perfil.js` + `app/(agente)/(tabs)/perfil.js` → botones "Cambiar de modo" condicionales
+- Comportamiento: 1 rol → entrada directa; 2 roles → selector en primer login, entrada directa en sesiones siguientes (SecureStore recuerda el último modo)
+
+**9.5.3 ✅ Vistas backoffice + tests** — Completada 2026-06-06.
+- `CancelacionController` (index + show, `cancelaciones.ver`)
+- `SesionParqueoWebController` (index, `sesiones_parqueo.ver`)
+- `InmovilizacionWebController` (index + show + liberar, `inmovilizaciones.ver` / `inmovilizaciones.retirar`)
+- `TransaccionPagoWebController` (index, `pagos.ver`)
+- `LiberarInmovilizacionRequest` (motivo requerido, min 10 chars)
+- 6 vistas Blade: `cancelaciones/{index,show}`, `sesiones-parqueo/index`, `inmovilizaciones/{index,show}`, `transacciones/index`
+- Breadcrumbs para las 4 nuevas rutas en `routes/breadcrumbs.php`
+- `CancelacionTest` (12 tests) + `InmovilizacionTest` (14 tests)
+- `UsuarioController` y `RolController` migrados de `authorizeResource` a `$this->middleware()` en constructor (+ `$this->authorize()` inline en RolController para proteger rol super_admin)
+- **Nota de patrón:** el proyecto usa `$this->middleware()` en constructor — NOT HasMiddleware estático (conflicto con método no-estático del padre)
+- **26 tests nuevos, 570 total.**
+
+**9.5.4 ✅ Módulo Fiscalización** — Completada 2026-06-06. 3 modelos, 2 enums, FiscalizacionService, EcuNovecentonceService stub (Art. 38.m), 5 endpoints API, backoffice con mapa Leaflet, app móvil: card turno + GPS 60s + pantalla reportar-incidente. 7 tests nuevos, 577 total.
+
+**9.5.5 ✅ Órdenes de Pago + Comprobantes** — Completada 2026-06-06. **Desbloqueó Fase 10.**
+- 4 modelos: `OrdenPago` (Art. 28), `Comprobante` (Art. 19), `LiquidacionAgente`/`LiquidacionPuntoVenta` (Art. 21)
+- 1 enum `EstadoOrdenPago` (pendiente/pagada/anulada/vencida)
+- 3 services: `OrdenPagoService`, `ComprobanteService` (idempotente), `LiquidacionService` (60%/90%)
+- Webhook actualizado: genera comprobante automáticamente al confirmar pago (Ticket o Infraccion)
+- 2 API controllers: `ComprobanteApiController` (show + pdf), `OrdenPagoApiController` (store)
+- 3 web controllers backoffice + 5 vistas Blade + breadcrumbs
+- PDF = HTML imprimible con `layouts.impresion` (sin PDF libs externas)
+- **7 tests nuevos, 584 total.**
+
+**9.5.6 ✅ Impugnaciones + Notificaciones Infracción** — Completada 2026-06-07. 2 modelos (Impugnacion, NotificacionInfraccion), ImpugnacionService, NotificacionInfraccionService (FCM best-effort), 2 API endpoints, ImpugnacionController backoffice + 2 vistas Blade. App móvil: detalle-infraccion.js con botón "Impugnar" + modal. 8 tests nuevos, 592 total.
+
+**9.5.7 ✅ QA funcional + preparación Fase 10** — Completada 2026-06-08.
+- 7 grupos de tests en verde (592 tests).
+- Deuda técnica resuelta: `AgenteParqueoFactory` completa, `VehiculoExonerado` toggle activar/suspender (Art. 27), docs `AgenteParqueoService` actualizados.
+- 3 stubs de integración creados en `app/Services/integraciones/`: `ConadisService` (Art. 26), `AntService`, `TesoreriaService` (Art. 19, 21).
+- **Fase 9.5 completamente cerrada.**
+
+---
+
+**Fase 9.5 completamente cerrada — Fase 10 desbloqueada.**
+
+---
+
 ## Fase 10 — Integraciones Externas
+
+> **DESBLOQUEADA** — Fase 9.5 completamente cerrada 2026-06-08.  
+> Stubs en `app/Services/integraciones/` (ConadisService, AntService, TesoreriaService, EcuNovecentonceService) listos para reemplazar con implementaciones HTTP reales.
 
 - CONADIS (validación de discapacidad).
 - ANT (validación de placas).
